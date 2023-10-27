@@ -75,9 +75,6 @@ to-report get-last [a-patch patch-pt direction]
   while [is-patch? checking-ground and (member? patch-pt [pts] of checking-ground)] [
     set x x + vec_x
     set y y + vec_y
-    ask checking-ground [
-      set pcolor yellow
-    ]
     set checking-ground patch-at x y
 
   ]
@@ -99,9 +96,6 @@ to-report get-last-before-ground [a-patch patch-pt direction]
   while [is-patch? checking-ground and member? patch-pt [pts] of checking-ground] [
     set x x + vec_x
     set y y + vec_y
-    ask checking-ground [
-      set pcolor yellow
-    ]
     set checking-ground patch-at x y
 
   ]
@@ -129,7 +123,6 @@ to init-rail
     ask checking-ground [
      let carriage-direction-vector rotate-vector-clock direction
      let carriage-head get-last checking-ground PT-TRAIN-LINE carriage-direction-vector
-       set pcolor green
       ask carriage-head [
        set pcolor pink
         init-train carriage-direction-vector
