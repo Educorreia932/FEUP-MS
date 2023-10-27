@@ -26,7 +26,7 @@ pois-own [to-spawn to-despawn empty ]
 trains-own [is-a-poi direction-vector]
 train-cells-own [belong-to-train]
 turtles-own [tt poi-paths init-poi-paths]
-patches-own [pts number-pt
+patches-own [pts pts-ids number-pt
  g-score h-score f-score parent ;a-star
 ]
 
@@ -41,6 +41,7 @@ end
 to init-patches
   ask patches [
     set pts []
+    set pts-ids []
     set number-pt 0
   ]
 end
@@ -48,25 +49,28 @@ end
 to init-ground
   ask patches with [pcolor = COLOR-GROUND][
    set pts lput PT-GROUND pts
+    set pts-ids lput 0 pts-ids
   ]
 end
 
 to init-lines
+  let train-line-id 0
   let non-instantiated-train-line one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts]
-  show non-instantiated-train-line
   while [non-instantiated-train-line != nobody] [
     ask non-instantiated-train-line [
       set pts lput PT-TRAIN-LINE pts
-      flood-zone PT-TRAIN-LINE COLOR-TRAIN-LINE
+      set pts-ids lput train-line-id pts-ids
+      flood-zone PT-TRAIN-LINE train-line-id COLOR-TRAIN-LINE
       init-rail
       ]
     set non-instantiated-train-line one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts ]
+    set train-line-id train-line-id + 1
   ]
 end
 
 
 ; patch
-to flood-zone [flood-pt flood-color]
+to flood-zone [flood-pt flood-pt-id flood-color]
   let to-flood []
   set to-flood fput self to-flood
   while [length to-flood > 0] [
@@ -77,6 +81,7 @@ to flood-zone [flood-pt flood-color]
       let new-to-flood other neighbors4 with [pcolor = flood-color and not member? flood-pt pts]
       ask new-to-flood [
         set pts lput flood-pt pts
+        set pts-ids lput flood-pt-id pts-ids
         set to-flood fput self to-flood
         ]
       ]
@@ -133,7 +138,6 @@ end
 
 to init-rail
   let directions [[0 1] [0 -1] [1 0] [-1 0]]
-  ;; left
   foreach directions [
     let direction first directions
     set directions remove-item 0 directions
@@ -182,7 +186,6 @@ to-report vector-direction [vector]
   report atan item 1 vector item 0 vector
 
 end
-
 ;patch
 to-report is-train-line-pt?
  report member? PT-TRAIN-LINE pts
@@ -231,6 +234,7 @@ to init-train [heading-vector]
               set belong-to-train inited-train
             ]
             set pts lput PT-TRAIN pts
+            set pts-ids lput 0 pts-ids
           ]
         ]
         set x x + outward_x
@@ -322,6 +326,8 @@ to-report pathfind [pathfind-to]
 
   while [length open-set > 0 ] [
     let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
+
+    ask current-vertex [sprout-debugers 1 [set color black]]
     if current-vertex = goal-vertex [ ; Goal reached
       let path backtrace-path goal-vertex
       report path
@@ -332,9 +338,6 @@ to-report pathfind [pathfind-to]
 
     ask current-vertex [
 
-     sprout-debugers 1 [
-       set color black
-        ]
       let pathable-neighbors neighbors with [
         is-pathable
       ]
@@ -364,15 +367,14 @@ to init-normalized-paths
     let new-poi-paths []
     foreach poi-paths [
       poi-path ->
-      show list "old" poi-path
       let new-path normalize-path poi-path
       set new-poi-paths lput new-path new-poi-paths
-      show list "new" new-path
     ]
     set poi-paths new-poi-paths
   ]
 end
 
+; observer
 to-report normalize-path [path]
   if length path < 3 [
    report path
@@ -706,23 +708,6 @@ BUTTON
 285
 NIL
 init-path-finding\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-349
-442
-918
-475
-NIL
-test-normalize
 NIL
 1
 T
