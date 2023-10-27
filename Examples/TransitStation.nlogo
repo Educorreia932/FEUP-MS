@@ -1,17 +1,22 @@
 extensions [bitmap]
 
 globals [
+  ; config constants
   FLOORS
+
+  ; infered config constants
   floor-width floor-height
-  number-passengers number-pois left-to-spawn
-  ; trains variables
+  PLATFORMS
+
+  ; CONSTANTS
+  ; trains
   train-width train-height train-gap train-length
 
   ;patch colors
   COLOR-TRAIN-LINE COLOR-GROUND COLOR-WALL COLOR-BOUNDARY COLOR-PORTAL
   PCS-PLATFORM
   ;patch type pt
-  PT-TRAIN-LINE PT-TRAIN PT-PLATFORM PT-WALL PT-BOUNDARY PT-PORTAL
+  PT-TRAIN-LINE PT-TRAIN PT-PLATFORM PT-GROUND PT-WALL PT-BOUNDARY PT-PORTAL
   PTS-PATHABLE
   ;turtle type tt
   TT-POI TT-PORTAL
@@ -19,6 +24,11 @@ globals [
 
   ;pathing
   pathing INFINITY
+
+  ; VARAIABLES
+
+
+  number-passengers number-pois left-to-spawn
 ]
 
 ;; breeds
@@ -41,9 +51,9 @@ turtles-own [
   tt poi-paths init-poi-paths
 ]
 patches-own [
- pfloor-id pfloor-x pfloor-y
- pts pts-ids number-pt
- g-score h-score f-score parent ;a-star
+  pfloor-id pfloor-x pfloor-y
+  pts pts-ids number-pt
+  g-score h-score f-score parent ;a-star
 ]
 
 ;; links
@@ -87,8 +97,8 @@ to init-floors
       set width-index 1 + (1 + floor-width) * floor-index
       set floor-x-index 0
       repeat floor-width [
-         ask patch width-index height-index [
-         set pfloor-id floor-index
+        ask patch width-index height-index [
+          set pfloor-id floor-index
           set pfloor-x floor-x-index
           set pfloor-y floor-y-index
         ]
@@ -98,7 +108,7 @@ to init-floors
       set height-index height-index + 1
       set floor-y-index floor-y-index + 1
     ]
-   set floor-index floor-index + 1
+    set floor-index floor-index + 1
 
   ]
 end
@@ -107,14 +117,21 @@ to init-platforms
   let platform-id 0
   let non-instantiated-platform one-of patches with [member? pcolor PCS-PLATFORM and not member? PT-PLATFORM pts]
   while [non-instantiated-platform != nobody][
-   print "new-platform"
-   ask non-instantiated-platform [
+    ask non-instantiated-platform [
       set pts lput PT-PLATFORM pts
       set pts-ids lput platform-id pts-ids
       flood-multizone PT-PLATFORM platform-id PCS-PLATFORM
     ]
-   set non-instantiated-platform one-of patches with [member? pcolor PCS-PLATFORM and not member? PT-PLATFORM pts]
-   set platform-id platform-id + 1
+    set non-instantiated-platform one-of patches with [member? pcolor PCS-PLATFORM and not member? PT-PLATFORM pts]
+    set platform-id platform-id + 1
+  ]
+  set PLATFORMS platform-id + 1
+end
+
+to init-grounds
+  ask patches with [pcolor = COLOR-GROUND][
+    set pts lput PT-GROUND PTS
+    set pts-ids lput 0 pts-ids
   ]
 end
 
@@ -135,7 +152,7 @@ to-report sprout-portal-cell
     set poi-paths []
     set init-poi-paths false
     set shape "star"
-   set sprouted-portal-cell self
+    set sprouted-portal-cell self
   ]
   report sprouted-portal-cell
 end
@@ -156,7 +173,7 @@ end
 
 to-report sprout-portal
   let sprouted-portal 0
- sprout-portals 1 [
+  sprout-portals 1 [
     ; portal
     set portal-id p-portal-id
     set portal-connect-ids []
@@ -165,6 +182,7 @@ to-report sprout-portal
     set tfloor-id pfloor-id
     set tfloor-x pfloor-x
     set tfloor-y pfloor-y
+    set tt TT-PORTAL
     set poi-paths []
     set init-poi-paths false
     set shape "arrow"
@@ -205,7 +223,6 @@ to init-portals
   let pportal-id 0
   let non-instantiated-portal one-of patches with [pcolor = COLOR-PORTAL and not member? PT-PORTAL pts]
   while [non-instantiated-portal != nobody] [
-    print "portal"
     ask non-instantiated-portal [
       set pts lput PT-PORTAL pts
       set pts-ids lput pportal-id pts-ids
@@ -227,7 +244,7 @@ to init-lines
       set pts-ids lput train-line-id pts-ids
       flood-zone PT-TRAIN-LINE train-line-id COLOR-TRAIN-LINE
       init-rail
-      ]
+    ]
     set non-instantiated-train-line one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts ]
     set train-line-id train-line-id + 1
   ]
@@ -247,9 +264,9 @@ to flood-multizone [flood-pt flood-pt-id flood-list-colors]
         set pts lput flood-pt pts
         set pts-ids lput flood-pt-id pts-ids
         set to-flood fput self to-flood
-        ]
       ]
     ]
+  ]
 end
 
 ; patch
@@ -266,9 +283,9 @@ to flood-zone [flood-pt flood-pt-id flood-color]
         set pts lput flood-pt pts
         set pts-ids lput flood-pt-id pts-ids
         set to-flood fput self to-flood
-        ]
       ]
     ]
+  ]
 end
 
 to-report get-last [a-patch patch-pt direction]
@@ -286,10 +303,10 @@ to-report get-last [a-patch patch-pt direction]
 
   ]
 
-   set x x - vec_x
-   set y y - vec_y
-   set checking-ground patch-at x y
-   report checking-ground
+  set x x - vec_x
+  set y y - vec_y
+  set checking-ground patch-at x y
+  report checking-ground
 end
 
 to-report get-last-before-ground [a-patch patch-pt direction]
@@ -309,10 +326,10 @@ to-report get-last-before-ground [a-patch patch-pt direction]
 
   if is-patch? checking-ground [
     if [pcolor] of checking-ground = COLOR-GROUND [
-     set x x - vec_x
-     set y y - vec_y
-     set checking-ground patch-at x y
-    report checking-ground
+      set x x - vec_x
+      set y y - vec_y
+      set checking-ground patch-at x y
+      report checking-ground
 
     ]
   ]
@@ -326,15 +343,15 @@ to init-rail
     set directions remove-item 0 directions
     let checking-ground get-last-before-ground self PT-TRAIN-LINE direction
     if checking-ground != nobody[
-    ask checking-ground [
-     let carriage-direction-vector rotate-vector-clock direction
-     let carriage-head get-last checking-ground PT-TRAIN-LINE carriage-direction-vector
-      ask carriage-head [
-       set pcolor pink
-        init-train carriage-direction-vector
+      ask checking-ground [
+        let carriage-direction-vector rotate-vector-clock direction
+        let carriage-head get-last checking-ground PT-TRAIN-LINE carriage-direction-vector
+        ask carriage-head [
+          set pcolor pink
+          init-train carriage-direction-vector
+        ]
       ]
-      ]
-    stop
+      stop
     ]
   ]
 
@@ -371,12 +388,11 @@ to-report vector-direction [vector]
 end
 ;patch
 to-report is-train-line-pt?
- report member? PT-TRAIN-LINE pts
- end
+  report member? PT-TRAIN-LINE pts
+end
 
 ; patch
 to-report sprout-train [heading-vector]
-  show "SProuting"
   let sprouted-train ""
   sprout-trains 1 [
     ; train
@@ -445,26 +461,36 @@ to init-train [heading-vector]
   ]
 end
 
-
+; observer
 to init-path-finding
-  let path-found-turtles []
-  let poi-turtles turtles with [tt = TT-POI]
-  let poi-turtles-with-no-paths poi-turtles with [init-poi-paths = false]
+  init-floors-pathfinding
+end
 
-  while [count poi-turtles-with-no-paths > 0 ][
-     ask one-of poi-turtles-with-no-paths[
-      let left-to-pathfind-to [self] of other poi-turtles-with-no-paths
-      let index 0
-      foreach left-to-pathfind-to [
-       let path pathfind item index left-to-pathfind-to
-       set poi-paths lput path poi-paths
-       set index index + 1
+; observer
+to init-floors-pathfinding
+  let platforms-index 0
+  repeat PLATFORMS [
+    let path-found-turtles []
+    let poi-turtles turtles with [member? tt TTS-PATHABLE and t-platform = platforms-index]
+    let poi-turtles-with-no-paths poi-turtles with [init-poi-paths = false]
+    print poi-turtles
+    while [count poi-turtles-with-no-paths > 0 ][
+      ask one-of poi-turtles-with-no-paths[
+        let left-to-pathfind-to [self] of other poi-turtles-with-no-paths
+        let index 0
+        foreach left-to-pathfind-to [
+          let goal item index left-to-pathfind-to
+          show goal
+          let path pathfind goal
+          set poi-paths lput path poi-paths
+          set index index + 1
+        ]
+        set init-poi-paths true
       ]
-      set init-poi-paths true
-    ]
       set poi-turtles-with-no-paths poi-turtles with [init-poi-paths = false]
+    ]
+    set platforms-index platforms-index + 1
   ]
-
 end
 
 to-report adjacent [p1 p2]
@@ -547,13 +573,14 @@ to-report pathfind [pathfind-to]
       ]
     ]
   ]
+  show (list "couldn't find" patch-here start-vertex goal-vertex)
   report []
 end
 
 
 ; observer
 to init-normalized-paths
-  let poi-turtles turtles with [tt = TT-POI]
+  let poi-turtles turtles with [member? tt TTS-PATHABLE]
   ask poi-turtles [
     show ""
     let new-poi-paths []
@@ -569,7 +596,7 @@ end
 ; observer
 to-report normalize-path [path]
   if length path < 3 [
-   report path
+    report path
   ]
   let prev-patch item 0 path
   let new-path (list prev-patch)
@@ -589,9 +616,9 @@ to-report normalize-path [path]
     let next-direction vector-direction next-vector
     let is-same-direction prev-direction = next-direction
     ifelse is-adjacent and is-same-direction [
-        ; Normalize the path
-        set  next-vector from-to-vector prev-patch cur-patch
-      ]
+      ; Normalize the path
+      set  next-vector from-to-vector prev-patch cur-patch
+    ]
     [
       ; Add to path
       set new-path lput cur-patch new-path
@@ -609,7 +636,7 @@ to-report normalize-path [path]
 end
 
 to setup-configs
- set FLOORS 3
+  set FLOORS 3
 end
 
 to setup-constants
@@ -624,22 +651,22 @@ to setup-constants
   set train-gap 2
   set train-length 2
   set COLOR-TRAIN-LINE [0 0 255]
-;  set COLOR-TRAIN-LINE [0 255 0]
+  ;  set COLOR-TRAIN-LINE [0 255 0]
   set COLOR-GROUND [255 255 255]
   set COLOR-WALL [0 0 0]
   set COLOR-BOUNDARY [245 0 255]
   set COLOR-PORTAL [255 255 0]
 
-  set PCS-PLATFORM (list COLOR-GROUND COLOR-PORTAL)
+  set PCS-PLATFORM (list COLOR-GROUND COLOR-PORTAL COLOR-TRAIN-LINE)
 
   set PT-TRAIN-LINE "TRAIN_LINE"
   set PT-TRAIN "TRAIN"
-  set PT-PLATFORM "GROUND"
+  set PT-PLATFORM "PLATFORM"
   set PT-WALL "WALL"
   set PT-BOUNDARY "BOUNDARY"
   set PT-PORTAL "PORTAL"
 
-  set PTS-PATHABLE (list PT-PLATFORM PT-TRAIN PT-PORTAL)
+  set PTS-PATHABLE (list PT-GROUND PT-TRAIN PT-PORTAL)
 
   set TT-POI "POI"
   set TT-PORTAL "PORTAL"
@@ -660,6 +687,7 @@ to setup-data
   init-basics
   init-floors
   init-platforms
+  init-grounds
   init-portals
   init-lines
   init-path-finding
@@ -667,9 +695,9 @@ to setup-data
 end
 
 to setup-run
-;  set left-to-spawn number-passengers
-;  init-pois
-;  init-passengers
+  ;  set left-to-spawn number-passengers
+  ;  init-pois
+  ;  init-passengers
   reset-ticks
 end
 
@@ -694,18 +722,18 @@ to create-a-poi-in-side [side]
   let x min-pxcor ; default left side
   if side = 1
   [
-   set x max-pxcor
+    set x max-pxcor
   ]
   create-a-poi x random-ycor
 end
 to create-a-poi [x y]
   create-pois 1 [
-  set empty true
+    set empty true
     set to-spawn []
     set to-despawn []
-   setxy x y
-   set shape "square"
-   set color red
+    setxy x y
+    set shape "square"
+    set color red
   ]
 end
 
@@ -716,18 +744,18 @@ to init-passengers
     let to-be-destination one-of pois with [self != to-be-source]
 
     create-passengers 1 [
-     set source to-be-source
-     set destination to-be-destination
-     set spawned false
-     set color pink
-     setxy [xcor] of source  [ycor] of source
+      set source to-be-source
+      set destination to-be-destination
+      set spawned false
+      set color pink
+      setxy [xcor] of source  [ycor] of source
     ]
 
   ]
-    ask pois [
-      set to-spawn passengers with [source = myself]
-      set to-despawn passengers with [destination = myself]
-    ]
+  ask pois [
+    set to-spawn passengers with [source = myself]
+    set to-despawn passengers with [destination = myself]
+  ]
 end
 
 
@@ -782,10 +810,10 @@ to go
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-204
-114
-929
-367
+205
+135
+930
+388
 -1
 -1
 7.63
@@ -826,10 +854,10 @@ NIL
 1
 
 BUTTON
-72
-492
-135
-525
+68
+498
+131
+531
 tick
 go
 NIL
@@ -843,10 +871,10 @@ NIL
 1
 
 BUTTON
-126
-129
-189
-162
+121
+114
+184
+147
 load
 load
 NIL
@@ -860,10 +888,10 @@ NIL
 1
 
 BUTTON
-83
-350
-160
-383
+79
+356
+156
+389
 init-lines
 init-lines
 NIL
@@ -877,10 +905,10 @@ NIL
 1
 
 BUTTON
-29
-455
-115
-488
+25
+461
+111
+494
 NIL
 setup-run
 NIL
@@ -894,10 +922,10 @@ NIL
 1
 
 BUTTON
-59
-89
-156
-122
+54
+74
+151
+107
 NIL
 setup-static
 NIL
@@ -911,10 +939,10 @@ NIL
 1
 
 BUTTON
-84
-386
-203
-419
+80
+392
+199
+425
 NIL
 init-path-finding\n
 NIL
@@ -928,10 +956,10 @@ NIL
 1
 
 BUTTON
-53
-164
-146
-197
+48
+149
+141
+182
 NIL
 setup-data\n
 NIL
@@ -945,10 +973,10 @@ NIL
 1
 
 BUTTON
-82
-422
-229
-455
+78
+428
+225
+461
 NIL
 init-normalized-paths
 NIL
@@ -962,10 +990,10 @@ NIL
 1
 
 BUTTON
-83
-240
-166
-273
+78
+218
+161
+251
 NIL
 init-floors
 NIL
@@ -979,10 +1007,10 @@ NIL
 1
 
 BUTTON
-81
-279
-185
-312
+77
+253
+181
+286
 NIL
 init-platforms\n
 NIL
@@ -996,10 +1024,10 @@ NIL
 1
 
 BUTTON
-86
-200
-182
-233
+81
+185
+177
+218
 NIL
 init-basics\n\n
 NIL
@@ -1013,12 +1041,29 @@ NIL
 1
 
 BUTTON
-80
-317
-170
-350
+76
+323
+166
+356
 NIL
 init-portals\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+77
+288
+174
+321
+NIL
+init-grounds\n
 NIL
 1
 T
