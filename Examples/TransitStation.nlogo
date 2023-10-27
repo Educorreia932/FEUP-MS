@@ -1,13 +1,15 @@
 extensions [bitmap]
 
-globals [number-passengers number-pois left-to-spawn
+globals [
+  FLOORS
+  number-passengers number-pois left-to-spawn
   ; trains variables
   train-width train-height train-gap train-length
 
   ;patch colors
-  COLOR-TRAIN-LINE COLOR-GROUND COLOR-WALL
+  COLOR-TRAIN-LINE COLOR-GROUND COLOR-WALL COLOR-BOUNDARY COLOR-PORTAL
   ;patch type pt
-  PT-TRAIN-LINE PT-TRAIN PT-GROUND PT-WALL
+  PT-TRAIN-LINE PT-TRAIN PT-GROUND PT-WALL PT-BOUNDARY PT-PORTAL
   PATHABLE-PTS
   ;turtle type tt
   TT-POI
@@ -33,7 +35,7 @@ patches-own [pts pts-ids number-pt
 links-own [link-type]
 
 to load
-  let img bitmap:import "small_station.png"
+  let img bitmap:import "2_floors_station.png"
   resize-world 0 (bitmap:width img - 1) 0 (bitmap:height img - 1)
   bitmap:copy-to-pcolors img false
 end
@@ -416,6 +418,10 @@ to-report normalize-path [path]
 
 end
 
+to setup-configs
+ set FLOORS 2
+end
+
 to setup-constants
 
 
@@ -431,11 +437,15 @@ to setup-constants
 ;  set COLOR-TRAIN-LINE [0 255 0]
   set COLOR-GROUND [255 255 255]
   set COLOR-WALL [0 0 0]
+  set COLOR-BOUNDARY [245 0 255]
+  set COLOR-PORTAL [255 255 0]
 
   set PT-TRAIN-LINE "TRAIN_LINE"
   set PT-TRAIN "TRAIN"
   set PT-GROUND "GROUND"
   set PT-WALL "WALL"
+  set PT-BOUNDARY "BOUNDARY"
+  set PT-PORTAL "PORTAL"
 
   set PATHABLE-PTS (list PT-GROUND PT-TRAIN)
 
@@ -445,6 +455,7 @@ to setup-constants
 end
 
 to setup-static
+  setup-configs
   setup-constants
   load
 end
@@ -575,8 +586,8 @@ end
 GRAPHICS-WINDOW
 511
 17
-909
-416
+1338
+442
 -1
 -1
 13.0
@@ -590,9 +601,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-29
+62
 0
-29
+31
 0
 0
 1
