@@ -24,16 +24,18 @@ globals [
 ;; breeds
 breed [passengers passenger]
 breed [pois poi]
-breed [portals portal]
 breed [trains train]
 breed [train-cells train-cell]
+breed [portals portal]
+breed [portal-cells portal-cell]
 breed [debugers debuger]
 
 passengers-own [source destination spawned]
 pois-own [to-spawn to-despawn empty ]
 trains-own [is-a-poi direction-vector]
-portals-own [portal-id portal-connect-ids]
 train-cells-own [belong-to-train]
+portals-own [portal-id portal-connect-ids]
+portal-cells-own [portal-id belong-to-portal]
 turtles-own [
   tfloor-id tfloor-x tfloor-y
   tt poi-paths init-poi-paths
@@ -51,7 +53,7 @@ undirected-link-breed [accesses access]
 links-own [link-type]
 
 to load
-  let img bitmap:import "3_platforms_2_floors_station.png"
+  let img bitmap:import "4_platforms_3_floors_station.png"
   resize-world 0 (bitmap:width img - 1) 0 (bitmap:height img - 1)
   set floor-width (world-width - FLOORS - 1 ) / FLOORS
   set floor-height world-height - 2 ; top and bottom edges
@@ -97,6 +99,7 @@ to init-floors
       set floor-y-index floor-y-index + 1
     ]
    set floor-index floor-index + 1
+
   ]
 end
 
@@ -116,14 +119,13 @@ to init-platforms
 end
 
 ; patch
-to-report sprout-portal
-  let sprouted-portal 0
-  let portal-pt-index position PT-PORTAL pts
-  let pportal-index item portal-pt-index pts-ids
-  sprout-portals 1 [
+to-report sprout-portal-cell
+  let sprouted-portal-cell 0
+  let pportal-index p-portal-id
+  sprout-portal-cells 1 [
     ; portal
     set portal-id pportal-index
-    set portal-connect-ids []
+    set belong-to-portal one-of portals with [portal-id = p-portal-id]
 
     ; turtle
     set color [80 0 80]
@@ -133,9 +135,9 @@ to-report sprout-portal
     set poi-paths []
     set init-poi-paths false
     set shape "star"
-   set sprouted-portal self
+   set sprouted-portal-cell self
   ]
-  report sprouted-portal
+  report sprouted-portal-cell
 end
 
 ; turtle
@@ -145,6 +147,58 @@ to-report t-platform
   report platform-id
 end
 
+; patch
+to-report p-portal-id
+  let portal-index position PT-PORTAL pts
+  let portal-id-to-report item portal-index pts-ids
+  report portal-id-to-report
+end
+
+to-report sprout-portal
+  let sprouted-portal 0
+ sprout-portals 1 [
+    ; portal
+    set portal-id p-portal-id
+    set portal-connect-ids []
+
+    ; turtle
+    set tfloor-id pfloor-id
+    set tfloor-x pfloor-x
+    set tfloor-y pfloor-y
+    set poi-paths []
+    set init-poi-paths false
+    set shape "arrow"
+
+
+    set sprouted-portal self
+  ]
+  report sprouted-portal
+end
+
+; observer
+to init-portal [portal-id-to-init]
+  let x-sum 0
+  let y-sum 0
+  let portal-patches patches with [member? PT-PORTAL pts and p-portal-id = portal-id-to-init]
+
+  ask portal-patches [
+    set x-sum x-sum + pxcor
+    set y-sum y-sum + pycor
+  ]
+
+  let num-portal-patches count portal-patches
+  let portal-centroid-x x-sum / num-portal-patches
+  let portal-centroid-y y-sum / num-portal-patches
+
+  let centroid-portal min-one-of portal-patches [distance patch portal-centroid-x portal-centroid-y]
+  ask centroid-portal [
+    let main-portal sprout-portal
+    ask portal-patches [
+      let _ sprout-portal-cell
+    ]
+  ]
+
+end
 
 ; observer
 to init-portals
@@ -157,28 +211,10 @@ to init-portals
       set pts-ids lput pportal-id pts-ids
       flood-zone PT-PORTAL pportal-id COLOR-PORTAL
     ]
+    init-portal pportal-id
     set  non-instantiated-portal one-of patches with [pcolor = COLOR-PORTAL and not member? PT-PORTAL pts]
     set pportal-id pportal-id + 1
   ]
-
-  ask patches with [member? PT-PORTAL pts][
-      let sprouted-portal sprout-portal
-  ]
-
-  ask portals [
-    create-accesses-with other portals with [
-
-      tfloor-x = [tfloor-x] of myself
-      and
-      tfloor-y = [tfloor-y] of myself
-    ]
-
-    create-findables-with other portals with [
-      t-platform = [t-platform] of myself
-    ]
-  ]
-
-
 end
 
 ; observer
@@ -573,7 +609,7 @@ to-report normalize-path [path]
 end
 
 to setup-configs
- set FLOORS 2
+ set FLOORS 3
 end
 
 to setup-constants
@@ -746,13 +782,13 @@ to go
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-299
-15
-954
-352
+204
+114
+929
+367
 -1
 -1
-10.27
+7.63
 1
 10
 1
@@ -763,7 +799,7 @@ GRAPHICS-WINDOW
 0
 1
 0
-62
+93
 0
 31
 0
