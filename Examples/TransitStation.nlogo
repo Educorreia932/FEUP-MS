@@ -370,10 +370,14 @@ to setup-static
 end
 
 
-to setup-run
+to setup-data
   init-patches
   init-ground
   init-lines
+  init-path-finding
+end
+
+to setup-run
 ;  set left-to-spawn number-passengers
 ;  init-pois
 ;  init-passengers
@@ -383,6 +387,7 @@ end
 to setup
   ca
   setup-static
+  setup-data
   setup-run
 end
 
