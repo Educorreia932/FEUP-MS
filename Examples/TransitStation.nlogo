@@ -64,6 +64,25 @@ to init-lines
   ]
 end
 
+
+; patch
+to flood-zone [flood-pt flood-color]
+  let to-flood []
+  set to-flood fput self to-flood
+  while [length to-flood > 0] [
+    let patch-to-flood first to-flood
+    set to-flood remove-item 0 to-flood
+    ask patch-to-flood [
+      set number-pt number-pt + 1
+      let new-to-flood other neighbors4 with [pcolor = flood-color and not member? flood-pt pts]
+      ask new-to-flood [
+        set pts lput flood-pt pts
+        set to-flood fput self to-flood
+        ]
+      ]
+    ]
+end
+
 to-report get-last [a-patch patch-pt direction]
   let vec_x item 0 direction
   let vec_y item 1 direction
@@ -315,24 +334,6 @@ to-report pathfind [pathfind-to]
       ]
     ]
   ]
-end
-
-; patch
-to flood-zone [flood-pt flood-color]
-  let to-flood []
-  set to-flood fput self to-flood
-  while [length to-flood > 0] [
-    let patch-to-flood first to-flood
-    set to-flood remove-item 0 to-flood
-    ask patch-to-flood [
-      set number-pt number-pt + 1
-      let new-to-flood other neighbors4 with [pcolor = flood-color and not member? flood-pt pts]
-      ask new-to-flood [
-        set pts lput flood-pt pts
-        set to-flood fput self to-flood
-        ]
-      ]
-    ]
 end
 
 to setup-constants
