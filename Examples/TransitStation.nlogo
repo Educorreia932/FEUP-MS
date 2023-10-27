@@ -171,6 +171,18 @@ to-report symmetric-vector [vector]
   report list new-x new-y
 end
 
+;observer
+to-report from-to-vector [p1 p2]
+  let x [pxcor] of p2 - [pxcor] of p1
+  let y [pycor] of p2 - [pycor] of p1
+  report list x y
+end
+
+to-report vector-direction [vector]
+  report atan item 1 vector item 0 vector
+
+end
+
 ;patch
 to-report is-train-line-pt?
  report member? PT-TRAIN-LINE pts
@@ -260,6 +272,14 @@ to init-path-finding
 
 end
 
+to-report adjacent [p1 p2]
+  let p1-neighbors []
+  ask p1 [
+    set p1-neighbors neighbors
+  ]
+  report member? p2 p1-neighbors
+end
+
 ; patch
 to-report h-distance [destination-patch]
   report distance destination-patch
@@ -279,7 +299,6 @@ to-report backtrace-path [goal-vertex]
     set current-vertex [parent] of current-vertex
   ]
   report path
-
 end
 
 ; turtle
@@ -334,6 +353,65 @@ to-report pathfind [pathfind-to]
       ]
     ]
   ]
+end
+
+
+; observer
+to init-normalized-paths
+  let poi-turtles turtles with [tt = TT-POI]
+  ask poi-turtles [
+    show ""
+    let new-poi-paths []
+    foreach poi-paths [
+      poi-path ->
+      show list "old" poi-path
+      let new-path normalize-path poi-path
+      set new-poi-paths lput new-path new-poi-paths
+      show list "new" new-path
+    ]
+    set poi-paths new-poi-paths
+  ]
+end
+
+to-report normalize-path [path]
+  if length path < 3 [
+   report path
+  ]
+  let prev-patch item 0 path
+  let new-path (list prev-patch)
+  let cur-patch item 1 path
+  let prev-vector from-to-vector prev-patch cur-patch
+  let prev-direction vector-direction prev-vector
+
+  let next-vector []
+  let next-patch nobody
+
+  let useful-path sublist path 2 length path
+  let index-useful-path 0
+  foreach useful-path[
+    set next-patch item index-useful-path useful-path
+    set next-vector from-to-vector cur-patch next-patch
+    let is-adjacent adjacent cur-patch next-patch
+    let next-direction vector-direction next-vector
+    let is-same-direction prev-direction = next-direction
+    ifelse is-adjacent and is-same-direction [
+        ; Normalize the path
+        set  next-vector from-to-vector prev-patch cur-patch
+      ]
+    [
+      ; Add to path
+      set new-path lput cur-patch new-path
+      set prev-direction from-to-vector cur-patch next-patch
+    ]
+
+
+    set index-useful-path index-useful-path + 1
+    set cur-patch next-patch
+
+  ]
+  set new-path lput last useful-path new-path
+  report new-path
+
 end
 
 to setup-constants
