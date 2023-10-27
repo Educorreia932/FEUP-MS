@@ -237,7 +237,8 @@ to init-path-finding
       let left-to-pathfind-to [self] of other poi-turtles-with-no-paths
       let index 0
       foreach left-to-pathfind-to [
-       pathfind item index left-to-pathfind-to
+       let path pathfind item index left-to-pathfind-to
+       set poi-paths lput path poi-paths
        set index index + 1
       ]
       set init-poi-paths true
@@ -258,18 +259,19 @@ to-report is-pathable
 end
 
 ;patch
-to backtrace-path [goal-vertex]
+to-report backtrace-path [goal-vertex]
   let path []
   let current-vertex goal-vertex
   while [current-vertex != 0] [
     set path fput current-vertex path
     set current-vertex [parent] of current-vertex
   ]
+  report path
 
 end
 
 ; turtle
-to pathfind [pathfind-to]
+to-report pathfind [pathfind-to]
   ask debugers [die]
   let start-vertex patch-here
   let goal-vertex [patch-here] of pathfind-to
@@ -290,8 +292,8 @@ to pathfind [pathfind-to]
   while [length open-set > 0 ] [
     let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
     if current-vertex = goal-vertex [ ; Goal reached
-      backtrace-path goal-vertex
-      stop
+      let path backtrace-path goal-vertex
+      report path
     ]
 
     set open-set (remove current-vertex open-set)
