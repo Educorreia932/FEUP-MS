@@ -3,22 +3,34 @@ extensions [bitmap]
 globals [number-passengers number-pois left-to-spawn
   ; trains variables
   train-width train-height train-gap train-length
-  COLOR-TRAIN-LINE COLOR-GROUND COLOR-WALL
 
+  ;patch colors
+  COLOR-TRAIN-LINE COLOR-GROUND COLOR-WALL
   ;patch type pt
-  PT-TRAIN-LINE PT-GROUND PT-WALL
+  PT-TRAIN-LINE PT-TRAIN PT-GROUND PT-WALL
+  PATHABLE-PTS
+  ;turtle type tt
+  TT-POI
+
+  ;pathing
+  pathing INFINITY
 ]
 breed [passengers passenger]
 breed [pois poi]
 breed [trains train]
 breed [train-cells train-cell]
+breed [debugers debuger]
 
 passengers-own [source destination spawned]
 pois-own [to-spawn to-despawn empty ]
-trains-own [direction-vector]
+trains-own [is-a-poi direction-vector]
 train-cells-own [belong-to-train]
+turtles-own [tt poi-paths init-poi-paths]
+patches-own [pts number-pt
+ g-score h-score f-score parent ;a-star
+]
 
-patches-own [pt number-pt]
+links-own [link-type]
 
 to load
   let img bitmap:import "small_station.png"
@@ -28,34 +40,39 @@ end
 
 to init-patches
   ask patches [
-    set pt ""
+    set pts []
     set number-pt 0
   ]
 end
 
-to init-lines
-  let non-instantiated-train-line one-of patches with [pcolor = COLOR-TRAIN-LINE and pt = ""]
-  show non-instantiated-train-line
-  while [non-instantiated-train-line != nobody] [
-    ask non-instantiated-train-line [
-      set pt PT-TRAIN-LINE
-      flood-zone PT-TRAIN-LINE COLOR-TRAIN-LINE
-      init-rail
-      ]
-    set non-instantiated-train-line one-of patches with [pcolor = COLOR-TRAIN-LINE and pt = ""]
+to init-ground
+  ask patches with [pcolor = COLOR-GROUND][
+   set pts lput PT-GROUND pts
   ]
 end
 
-to-report get-last [a-patch direction]
-  let patch-pt pt
- let vec_x item 0 direction
+to init-lines
+  let non-instantiated-train-line one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts]
+  show non-instantiated-train-line
+  while [non-instantiated-train-line != nobody] [
+    ask non-instantiated-train-line [
+      set pts lput PT-TRAIN-LINE pts
+      flood-zone PT-TRAIN-LINE COLOR-TRAIN-LINE
+      init-rail
+      ]
+    set non-instantiated-train-line one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts ]
+  ]
+end
+
+to-report get-last [a-patch patch-pt direction]
+  let vec_x item 0 direction
   let vec_y item 1 direction
   let x 0
   let y 0
 
 
   let checking-ground patch-at x y
-  while [is-patch? checking-ground and [pt] of checking-ground = patch-pt] [
+  while [is-patch? checking-ground and (member? patch-pt [pts] of checking-ground)] [
     set x x + vec_x
     set y y + vec_y
     ask checking-ground [
@@ -71,8 +88,7 @@ to-report get-last [a-patch direction]
    report checking-ground
 end
 
-to-report get-last-before-ground [a-patch direction]
-  let patch-pt pt
+to-report get-last-before-ground [a-patch patch-pt direction]
   let vec_x item 0 direction
   let vec_y item 1 direction
   let x 0
@@ -80,7 +96,7 @@ to-report get-last-before-ground [a-patch direction]
 
 
   let checking-ground patch-at x y
-  while [is-patch? checking-ground and [pt] of checking-ground = patch-pt] [
+  while [is-patch? checking-ground and member? patch-pt [pts] of checking-ground] [
     set x x + vec_x
     set y y + vec_y
     ask checking-ground [
@@ -108,12 +124,11 @@ to init-rail
   foreach directions [
     let direction first directions
     set directions remove-item 0 directions
-    let checking-ground get-last-before-ground self direction
-
+    let checking-ground get-last-before-ground self PT-TRAIN-LINE direction
     if checking-ground != nobody[
     ask checking-ground [
      let carriage-direction-vector rotate-vector-clock direction
-     let carriage-head get-last checking-ground carriage-direction-vector
+     let carriage-head get-last checking-ground PT-TRAIN-LINE carriage-direction-vector
        set pcolor green
       ask carriage-head [
        set pcolor pink
@@ -144,20 +159,28 @@ to-report symmetric-vector [vector]
   report list new-x new-y
 end
 
-to-report is-train-pt?
- if pt = PT-TRAIN-LINE[
-    report true
-  ]
-  report false
-end
-to init-train [heading-vector]
-  let inited-train nobody
-  sprout-trains 1 [
+;patch
+to-report is-train-line-pt?
+ report member? PT-TRAIN-LINE pts
+ end
+
+to-report sprout-train [heading-vector]
+  let sprouted-train ""
+   sprout-trains 1 [
     set direction-vector heading-vector
     set color [133 133 133]
     facexy xcor + item 0 heading-vector ycor + item 1 heading-vector
-    set inited-train self
+    set is-a-poi true
+    set tt TT-POI
+    set poi-paths []
+    set init-poi-paths false
+    set sprouted-train self
   ]
+    report sprouted-train
+end
+
+to init-train [heading-vector]
+  let inited-train sprout-train heading-vector
 
   let heading_x item 0 heading-vector
   let heading_y item 1 heading-vector
@@ -177,12 +200,13 @@ to init-train [heading-vector]
       while [width-index < train-width] [
         let train-patch patch-at x y
         ask train-patch [
-          if is-train-pt? [
+          if is-train-line-pt? [
             sprout-train-cells 1 [
               set color red
               set shape "circle"
               set belong-to-train inited-train
             ]
+            set pts lput PT-TRAIN pts
           ]
         ]
         set x x + outward_x
@@ -202,6 +226,103 @@ to init-train [heading-vector]
   ]
 end
 
+
+to init-path-finding
+  let path-found-turtles []
+  let poi-turtles turtles with [tt = TT-POI]
+  let poi-turtles-with-no-paths poi-turtles with [init-poi-paths = false]
+
+  while [count poi-turtles-with-no-paths > 0 ][
+     ask one-of poi-turtles-with-no-paths[
+      let left-to-pathfind-to [self] of other poi-turtles-with-no-paths
+      let index 0
+      foreach left-to-pathfind-to [
+       pathfind item index left-to-pathfind-to
+       set index index + 1
+      ]
+      set init-poi-paths true
+    ]
+      set poi-turtles-with-no-paths poi-turtles with [init-poi-paths = false]
+  ]
+
+end
+
+; patch
+to-report h-distance [destination-patch]
+  report distance destination-patch
+end
+
+;patch
+to-report is-pathable
+  report not empty? filter [i -> member? i PATHABLE-PTS] pts
+end
+
+;patch
+to backtrace-path [goal-vertex]
+  let path []
+  let current-vertex goal-vertex
+  while [current-vertex != 0] [
+    set path fput current-vertex path
+    set current-vertex [parent] of current-vertex
+  ]
+
+end
+
+; turtle
+to pathfind [pathfind-to]
+  ask debugers [die]
+  let start-vertex patch-here
+  let goal-vertex [patch-here] of pathfind-to
+  ask patches with [is-pathable] [
+    set g-score infinity
+    set h-score h-distance goal-vertex
+    set f-score (g-score + h-score)
+    set parent 0
+  ]
+
+  let open-set (list start-vertex)
+  let closed-set []
+  ask start-vertex [
+    set g-score 0
+    set f-score h-score
+  ]
+
+  while [length open-set > 0 ] [
+    let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
+    if current-vertex = goal-vertex [ ; Goal reached
+      backtrace-path goal-vertex
+      stop
+    ]
+
+    set open-set (remove current-vertex open-set)
+    set closed-set lput current-vertex closed-set
+
+    ask current-vertex [
+
+     sprout-debugers 1 [
+       set color black
+        ]
+      let pathable-neighbors neighbors with [
+        is-pathable
+      ]
+      ask pathable-neighbors[
+        if not member? self closed-set [
+          let tentative-g [g-score] of current-vertex + distance current-vertex
+          if not member? self open-set or tentative-g < g-score [
+            set g-score tentative-g
+            set f-score h-score + g-score
+            set parent current-vertex
+            if not member? self open-set [
+              set open-set lput self open-set
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+end
+
+; patch
 to flood-zone [flood-pt flood-color]
   let to-flood []
   set to-flood fput self to-flood
@@ -210,9 +331,9 @@ to flood-zone [flood-pt flood-color]
     set to-flood remove-item 0 to-flood
     ask patch-to-flood [
       set number-pt number-pt + 1
-      let new-to-flood other neighbors4 with [pcolor = flood-color and pt != flood-pt]
+      let new-to-flood other neighbors4 with [pcolor = flood-color and not member? flood-pt pts]
       ask new-to-flood [
-        set pt flood-pt
+        set pts lput flood-pt pts
         set to-flood fput self to-flood
         ]
       ]
@@ -236,9 +357,15 @@ to setup-constants
   set COLOR-WALL [0 0 0]
 
   set PT-TRAIN-LINE "TRAIN_LINE"
+  set PT-TRAIN "TRAIN"
   set PT-GROUND "GROUND"
   set PT-WALL "WALL"
 
+  set PATHABLE-PTS (list PT-GROUND PT-TRAIN)
+
+  set TT-POI "POI"
+
+  set INFINITY 999999
 end
 
 to setup-static
@@ -249,10 +376,11 @@ end
 
 to setup-run
   init-patches
+  init-ground
   init-lines
-  set left-to-spawn number-passengers
-  init-pois
-  init-passengers
+;  set left-to-spawn number-passengers
+;  init-pois
+;  init-passengers
   reset-ticks
 end
 
@@ -482,6 +610,23 @@ BUTTON
 122
 NIL
 setup-static
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+231
+344
+350
+377
+NIL
+init-path-finding\n
 NIL
 1
 T
