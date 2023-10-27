@@ -10,9 +10,13 @@ globals [number-passengers number-pois left-to-spawn
 ]
 breed [passengers passenger]
 breed [pois poi]
+breed [trains train]
+breed [train-cells train-cell]
 
 passengers-own [source destination spawned]
 pois-own [to-spawn to-despawn empty ]
+trains-own [direction-vector]
+train-cells-own [belong-to-train]
 
 patches-own [pt number-pt]
 
@@ -33,7 +37,6 @@ to init-lines
   let non-instantiated-train-line one-of patches with [pcolor = COLOR-TRAIN-LINE and pt = ""]
   show non-instantiated-train-line
   while [non-instantiated-train-line != nobody] [
-    print "INSTANTIATING"
     ask non-instantiated-train-line [
       set pt PT-TRAIN-LINE
       flood-zone PT-TRAIN-LINE COLOR-TRAIN-LINE
@@ -101,19 +104,15 @@ end
 
 to init-rail
   let directions [[0 1] [0 -1] [1 0] [-1 0]]
-  show list "directions" directions
   ;; left
   foreach directions [
     let direction first directions
-    show list "direciton" direction
     set directions remove-item 0 directions
     let checking-ground get-last-before-ground self direction
-    show list "reported checking-ground" checking-ground
+
     if checking-ground != nobody[
     ask checking-ground [
-
      let carriage-direction-vector rotate-vector-clock direction
-     show carriage-direction-vector
      let carriage-head get-last checking-ground carriage-direction-vector
        set pcolor green
       ask carriage-head [
@@ -145,7 +144,21 @@ to-report symmetric-vector [vector]
   report list new-x new-y
 end
 
+to-report is-train-pt?
+ if pt = PT-TRAIN-LINE[
+    report true
+  ]
+  report false
+end
 to init-train [heading-vector]
+  let inited-train nobody
+  sprout-trains 1 [
+    set direction-vector heading-vector
+    set color [133 133 133]
+    facexy xcor + item 0 heading-vector ycor + item 1 heading-vector
+    set inited-train self
+  ]
+
   let heading_x item 0 heading-vector
   let heading_y item 1 heading-vector
   let outward-vector rotate-vector-clock heading-vector
@@ -164,7 +177,13 @@ to init-train [heading-vector]
       while [width-index < train-width] [
         let train-patch patch-at x y
         ask train-patch [
-          set pcolor red
+          if is-train-pt? [
+            sprout-train-cells 1 [
+              set color red
+              set shape "circle"
+              set belong-to-train inited-train
+            ]
+          ]
         ]
         set x x + outward_x
         set y y + outward_y
@@ -284,9 +303,6 @@ to init-passengers
      set spawned false
      set color pink
      setxy [xcor] of source  [ycor] of source
-
-
-     show list source destination
     ]
 
   ]
