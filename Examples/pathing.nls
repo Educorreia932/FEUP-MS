@@ -16,7 +16,6 @@ to init-portals-pathfinding
     ]
     ask connected-portals [
       create-access-with p-a1 [
-        print (list "create access" p-a1 self myself)
         set a1 p-a1
         set a2 myself
         set p-cost 0 
@@ -33,14 +32,12 @@ to init-floors-pathfinding
     let path-found-turtles []
     let poi-turtles turtles with [member? tt TTS-PATHABLE and t-platform = platforms-index]
     let poi-turtles-with-no-paths poi-turtles with [init-poi-paths = false]
-    print poi-turtles
     while [count poi-turtles-with-no-paths > 0 ][
       ask one-of poi-turtles-with-no-paths[
         let left-to-pathfind-to [self] of other poi-turtles-with-no-paths
         let index 0
         foreach left-to-pathfind-to [
           let goal item index left-to-pathfind-to
-          show goal
           let path pathfind goal
           let normalized-path normalize-path path
           let normalized-path-cost distance-path normalized-path
@@ -155,6 +152,89 @@ to-report p-pathfind [start-vertex goal-vertex]
   report []
 end
 
+
+; patch
+to-report p-platform-neighbors [nodes]
+  let neighbor-nodes 0
+  ifelse any? portals-here [
+    let portal-node one-of portals-here
+    set neighbor-nodes nodes with [
+      p-platform = [p-platform] of myself
+      or
+      member? portal-node access-neighbors 
+    ]
+  ]
+  [
+    set neighbor-nodes nodes with [
+      p-platform = [p-platform] of myself 
+    ]
+  ]
+  report neighbor-nodes
+end 
+
+; patch 
+to-report p-distance-platform [destination-patch]
+  let _distance 0
+  ifelse p-platform = [p-platform] of destination-patch [
+      ; normal pathfind
+    let path p-pathfind self destination-patch
+    set _distance distance-path path
+  ][
+    let destination-portal one-of [portals-here] of destination-patch
+    set _distance [p-cost] of access-with destination-portal
+  ]
+  report _distance
+end
+
+; observer
+; TODO test
+to-report p-platform-pathfind [start-node goal-node]
+  let nodes patches with [
+    any? portals-here 
+    or 
+    self = start-node
+    or 
+    self = goal-node
+  ] 
+  
+  ask nodes [
+    set g-score infinity
+    set parent 0 
+  ]
+  
+  ask start-node [
+    set g-score 0
+  ]
+  
+  let open-set (list start-node)
+  let closed-set []
+  
+  while [not empty? open-set ] [
+    let current-node min-one-of open-set [g-score]
+    ask current-node [sprout-debugers 1 [set color black]] ; DEBUG
+    
+    set open-set (remove current-node open-set)
+    
+    let platform-neighbor-nodes p-platform-neighbors nodes
+    let not-explored-neighbor-nodes filter [x -> member? x platform-neighbor-nodes] open-set
+    ask not-explored-neighbor-nodes [
+      let edge-distance p-distance-platform current-node
+      let alt [g-score] of current-node + edge-distance
+      if alt < g-score [
+        set g-score alt
+        set parent current-node
+      ]
+    ]
+    
+    
+    
+  ]
+  
+  let path backtrace-path goal-node
+  report path
+  
+end
+
 ; observer
 to show-pathfinding [start-vertex goal-vertex]
   let path p-pathfind start-vertex goal-vertex
@@ -184,7 +264,6 @@ end
 to init-normalized-paths
   let poi-turtles turtles with [member? tt TTS-PATHABLE]
   ask poi-turtles [
-    show ""
     let new-poi-paths []
     foreach poi-paths [
       poi-path ->
