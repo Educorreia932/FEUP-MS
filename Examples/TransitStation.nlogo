@@ -18,6 +18,11 @@ to init-basics
   clear-links
 end
 
+; patch
+to-report p-index
+  report pxcor * world-height + pycor
+end
+
 to init-floors
   let floor-index 0
   let height-index 0
@@ -49,14 +54,14 @@ end
 
 to init-platforms
   let platform-id 0
-  let non-instantiated-platform one-of patches with [member? pcolor PCS-PLATFORM and not member? PT-PLATFORM pts]
+  let non-instantiated-platform min-one-of patches with [member? pcolor PCS-PLATFORM and not member? PT-PLATFORM pts] [p-index]
   while [non-instantiated-platform != nobody][
     ask non-instantiated-platform [
       set pts lput PT-PLATFORM pts
       set pts-ids lput platform-id pts-ids
       flood-multizone PT-PLATFORM platform-id PCS-PLATFORM
     ]
-    set non-instantiated-platform one-of patches with [member? pcolor PCS-PLATFORM and not member? PT-PLATFORM pts]
+    set non-instantiated-platform min-one-of patches with [member? pcolor PCS-PLATFORM and not member? PT-PLATFORM pts][p-index]
     set platform-id platform-id + 1
   ]
   set PLATFORMS platform-id + 1
@@ -112,7 +117,7 @@ to-report sprout-portal-cell
   sprout-portal-cells 1 [
     ; portal
     set portal-id pportal-index
-    set belong-to-portal one-of portals with [portal-id = p-portal-id]
+    set belong-to-portal min-one-of portals with [portal-id = p-portal-id][[p-index] of patch-here]
 
     ; turtle
     set color [80 0 80]
@@ -155,7 +160,7 @@ end
 ; observer
 to init-portals
   let pportal-id 0
-  let non-instantiated-portal one-of patches with [pcolor = COLOR-PORTAL and not member? PT-PORTAL pts]
+  let non-instantiated-portal min-one-of patches with [pcolor = COLOR-PORTAL and not member? PT-PORTAL pts][p-index]
   while [non-instantiated-portal != nobody] [
     ask non-instantiated-portal [
       set pts lput PT-PORTAL pts
@@ -163,7 +168,7 @@ to init-portals
       flood-zone PT-PORTAL pportal-id COLOR-PORTAL
     ]
     init-portal pportal-id
-    set  non-instantiated-portal one-of patches with [pcolor = COLOR-PORTAL and not member? PT-PORTAL pts]
+    set  non-instantiated-portal min-one-of patches with [pcolor = COLOR-PORTAL and not member? PT-PORTAL pts][p-index]
     set pportal-id pportal-id + 1
   ]
 end
@@ -171,7 +176,7 @@ end
 ; observer
 to init-lines
   let train-line-id 0
-  let non-instantiated-train-line one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts]
+  let non-instantiated-train-line min-one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts][p-index]
   while [non-instantiated-train-line != nobody] [
     ask non-instantiated-train-line [
       set pts lput PT-TRAIN-LINE pts
@@ -179,7 +184,7 @@ to init-lines
       flood-zone PT-TRAIN-LINE train-line-id COLOR-TRAIN-LINE
       init-rail
     ]
-    set non-instantiated-train-line one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts ]
+    set non-instantiated-train-line min-one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts ][p-index]
     set train-line-id train-line-id + 1
   ]
 end
