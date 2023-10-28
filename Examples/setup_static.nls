@@ -2,6 +2,7 @@ extensions [bitmap]
 
 globals [
   ; config constants
+  FILE
   FLOORS
 
   ; infered config constants
@@ -26,21 +27,15 @@ globals [
   pathing INFINITY
 ]
 
-to setup-static
-  setup-configs
-  setup-constants
-  load
-end
 
 to setup-configs
+  set FILE "4_platforms_3_floors_station.png"
+  set FILE "small_station.png"
   set FLOORS 3
 end
 
 
 to setup-constants
-  ;instantiate globals
-  set number-passengers 5
-  set number-pois 2
 
   set train-width 3
   set train-height 5
@@ -70,10 +65,13 @@ to setup-constants
   set TTS-PATHABLE (list "POI" "PORTAL")
 
   set INFINITY 999999
+  ;instantiate globals
+  set number-passengers 5
+  set number-pois 2
 end
 
 to load
-  let img bitmap:import "4_platforms_3_floors_station.png"
+  let img bitmap:import FILE
   resize-world 0 (bitmap:width img - 1) 0 (bitmap:height img - 1)
   set floor-width (world-width - FLOORS - 1 ) / FLOORS
   set floor-height world-height - 2 ; top and bottom edges
@@ -81,3 +79,8 @@ to load
   bitmap:copy-to-pcolors img false
 end
 
+to setup-static
+  setup-configs
+  setup-constants
+  load
+end
