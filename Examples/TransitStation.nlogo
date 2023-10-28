@@ -133,21 +133,28 @@ to-report sprout-portal-cell
 end
 
 ; observer
-to init-portal [portal-id-to-init]
+to-report get-centroid [patches-set]
+
   let x-sum 0
   let y-sum 0
-  let portal-patches patches with [member? PT-PORTAL pts and p-portal-id = portal-id-to-init]
 
-  ask portal-patches [
+  ask patches-set [
     set x-sum x-sum + pxcor
     set y-sum y-sum + pycor
   ]
 
-  let num-portal-patches count portal-patches
-  let portal-centroid-x x-sum / num-portal-patches
-  let portal-centroid-y y-sum / num-portal-patches
+  let num-patches count patches-set
+  let centroid-x x-sum / num-patches
+  let centroid-y y-sum / num-patches
+  let centroid min-one-of patches-set [distance patch centroid-x centroid-y]
+  report centroid
+end
 
-  let centroid-portal min-one-of portal-patches [distance patch portal-centroid-x portal-centroid-y]
+; observer
+to init-portal [portal-id-to-init]
+  let portal-patches patches with [member? PT-PORTAL pts and p-portal-id = portal-id-to-init]
+  let centroid-portal get-centroid portal-patches
+
   ask centroid-portal [
     let main-portal sprout-portal
     ask portal-patches [
