@@ -1,40 +1,9 @@
-__includes ["vector_utils.nls" "setup_static.nls" "pathing.nls"]
+__includes ["vector_utils.nls" "setup_static.nls" "pathing.nls" "breeds.nls"]
 
 globals [
   ; VARAIABLES
   number-passengers number-pois left-to-spawn
 ]
-
-;; breeds
-breed [passengers passenger]
-breed [pois poi]
-breed [trains train]
-breed [train-cells train-cell]
-breed [portals portal]
-breed [portal-cells portal-cell]
-breed [debugers debuger]
-
-passengers-own [source destination spawned]
-pois-own [to-spawn to-despawn empty ]
-trains-own [is-a-poi direction-vector]
-train-cells-own [belong-to-train]
-portals-own [portal-id portal-connect-ids]
-portal-cells-own [portal-id belong-to-portal]
-turtles-own [
-  tfloor-id tfloor-x tfloor-y
-  tt poi-paths init-poi-paths
-]
-patches-own [
-  pfloor-id pfloor-x pfloor-y
-  pts pts-ids number-pt
-  g-score h-score f-score parent ;a-star
-]
-
-;; links
-undirected-link-breed [findables findable]
-undirected-link-breed [accesses access]
-
-links-own [link-type]
 
 to init-basics
   ask patches [

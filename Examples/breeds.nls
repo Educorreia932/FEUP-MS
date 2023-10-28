@@ -1,0 +1,33 @@
+;; breeds
+breed [passengers passenger]
+breed [pois poi]
+breed [trains train]
+breed [train-cells train-cell]
+breed [portals portal]
+breed [portal-cells portal-cell]
+breed [debugers debuger]
+
+passengers-own [source destination spawned]
+pois-own [to-spawn to-despawn empty ]
+trains-own [is-a-poi direction-vector]
+train-cells-own [belong-to-train]
+portals-own [portal-id portal-connect-ids]
+portal-cells-own [portal-id belong-to-portal]
+turtles-own [
+  tfloor-id tfloor-x tfloor-y
+  tt poi-paths init-poi-paths
+]
+patches-own [
+  pfloor-id pfloor-x pfloor-y
+  pts pts-ids number-pt
+  g-score h-score f-score parent ;a-star
+]
+
+;; links
+undirected-link-breed [findables findable]
+undirected-link-breed [accesses access]
+
+findables-own [f1 f2 f-path f-p-id]
+accesses-own [a1 a2 p-cost]
+
+links-own [link-type]
