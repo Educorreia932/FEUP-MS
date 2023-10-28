@@ -43,11 +43,13 @@ to init-floors-pathfinding
           show goal
           let path pathfind goal
           let normalized-path normalize-path path
+          let normalized-path-cost distance-path normalized-path
           set poi-paths lput path poi-paths
           create-findable-with goal [
             set f1 myself
             set f2 goal
             set f-path normalized-path
+            set f-cost normalized-path-cost
             set f-p-id platforms-index
             set color green
           ]
@@ -62,6 +64,7 @@ to init-floors-pathfinding
   ]
 end
 
+; observer
 to-report adjacent [p1 p2]
   let p1-neighbors []
   ask p1 [
@@ -96,6 +99,11 @@ to-report pathfind [pathfind-to]
   ask debugers [die]
   let start-vertex patch-here
   let goal-vertex [patch-here] of pathfind-to
+  report p-pathfind start-vertex goal-vertex
+end
+
+; observer
+to-report p-pathfind [start-vertex goal-vertex]
   ask patches with [is-pathable] [
     set g-score infinity
     set h-score h-distance goal-vertex
@@ -113,7 +121,8 @@ to-report pathfind [pathfind-to]
   while [length open-set > 0 ] [
     let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
     
-    ask current-vertex [sprout-debugers 1 [set color black]]
+    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+    
     if current-vertex = goal-vertex [ ; Goal reached
       let path backtrace-path goal-vertex
       report path
@@ -142,10 +151,34 @@ to-report pathfind [pathfind-to]
       ]
     ]
   ]
-  show (list "couldn't find" patch-here start-vertex goal-vertex)
+  show (list "couldn't find" start-vertex goal-vertex)
   report []
 end
 
+; observer
+to show-pathfinding [start-vertex goal-vertex]
+  let path p-pathfind start-vertex goal-vertex
+  show-path path
+end
+
+; observer
+to show-path [path]
+  let index 0
+  repeat length path - 1 [
+    ask item index path [
+      sprout-debugers 1 [
+      set color red
+      face item (index + 1) path
+      ]
+    ] 
+  set index index + 1
+  ]
+end
+
+; observer
+to reset-show-paths
+  ask debugers [die]
+end
 
 ; observer
 to init-normalized-paths
@@ -203,5 +236,20 @@ to-report normalize-path [path]
   
   set new-path lput last useful-path new-path
   report new-path
-  
+end
+
+to-report distance-path [path]
+  let total-distance 0
+  let index 0
+  let prev-patch 0
+  let next-patch 0
+  repeat length path - 1 [
+    set prev-patch item index path
+    set next-patch item (index + 1) path
+    ask prev-patch [
+      set total-distance total-distance + distance next-patch
+    ]
+    set index index + 1 
+  ]
+  report total-distance
 end

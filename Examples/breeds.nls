@@ -27,7 +27,7 @@ patches-own [
 undirected-link-breed [findables findable]
 undirected-link-breed [accesses access]
 
-findables-own [f1 f2 f-path f-p-id]
+findables-own [f1 f2 f-path f-cost f-p-id ]
 accesses-own [a1 a2 p-cost]
 
 links-own [link-type]
