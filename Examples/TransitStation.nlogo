@@ -69,28 +69,6 @@ to init-grounds
   ]
 end
 
-; patch
-to-report sprout-portal-cell
-  let sprouted-portal-cell 0
-  let pportal-index p-portal-id
-  sprout-portal-cells 1 [
-    ; portal
-    set portal-id pportal-index
-    set belong-to-portal one-of portals with [portal-id = p-portal-id]
-
-    ; turtle
-    set color [80 0 80]
-    set tfloor-id pfloor-id
-    set tfloor-x pfloor-x
-    set tfloor-y pfloor-y
-    set poi-paths []
-    set init-poi-paths false
-    set shape "star"
-    set sprouted-portal-cell self
-  ]
-  report sprouted-portal-cell
-end
-
 ; turtle
 to-report t-platform
   let platform-index position PT-PLATFORM [pts] of patch-here
@@ -125,6 +103,28 @@ to-report sprout-portal
     set sprouted-portal self
   ]
   report sprouted-portal
+end
+
+; patch
+to-report sprout-portal-cell
+  let sprouted-portal-cell 0
+  let pportal-index p-portal-id
+  sprout-portal-cells 1 [
+    ; portal
+    set portal-id pportal-index
+    set belong-to-portal one-of portals with [portal-id = p-portal-id]
+
+    ; turtle
+    set color [80 0 80]
+    set tfloor-id pfloor-id
+    set tfloor-x pfloor-x
+    set tfloor-y pfloor-y
+    set poi-paths []
+    set init-poi-paths false
+    set shape "star"
+    set sprouted-portal-cell self
+  ]
+  report sprouted-portal-cell
 end
 
 ; observer
