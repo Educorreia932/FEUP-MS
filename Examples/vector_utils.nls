@@ -1,0 +1,29 @@
+
+to-report rotate-vector-clock [vector]
+  let new-x item 1 vector * 1
+  let new-y item 0 vector * -1
+  report list new-x new-y
+end
+
+to-report rotate-vector-counterclock [vector]
+  let new-x item 1 vector * -1
+  let new-y item 0 vector * 1
+  report list new-x new-y
+end
+
+to-report symmetric-vector [vector]
+  let new-x -1 * item 0 vector
+  let new-y -1 * item 1 vector
+  report list new-x new-y
+end
+
+;observer
+to-report from-to-vector [p1 p2]
+  let x [pxcor] of p2 - [pxcor] of p1
+  let y [pycor] of p2 - [pycor] of p1
+  report list x y
+end
+
+to-report vector-direction [vector]
+  report atan item 1 vector item 0 vector
+end

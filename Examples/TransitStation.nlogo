@@ -1,33 +1,7 @@
-extensions [bitmap]
+__includes ["vector_utils.nls" "setup_static.nls"]
 
 globals [
-  ; config constants
-  FLOORS
-
-  ; infered config constants
-  floor-width floor-height
-  PLATFORMS
-
-  ; CONSTANTS
-  ; trains
-  train-width train-height train-gap train-length
-
-  ;patch colors
-  COLOR-TRAIN-LINE COLOR-GROUND COLOR-WALL COLOR-BOUNDARY COLOR-PORTAL
-  PCS-PLATFORM
-  ;patch type pt
-  PT-TRAIN-LINE PT-TRAIN PT-PLATFORM PT-GROUND PT-WALL PT-BOUNDARY PT-PORTAL
-  PTS-PATHABLE
-  ;turtle type tt
-  TT-POI TT-PORTAL
-  TTS-PATHABLE
-
-  ;pathing
-  pathing INFINITY
-
   ; VARAIABLES
-
-
   number-passengers number-pois left-to-spawn
 ]
 
@@ -61,15 +35,6 @@ undirected-link-breed [findables findable]
 undirected-link-breed [accesses access]
 
 links-own [link-type]
-
-to load
-  let img bitmap:import "4_platforms_3_floors_station.png"
-  resize-world 0 (bitmap:width img - 1) 0 (bitmap:height img - 1)
-  set floor-width (world-width - FLOORS - 1 ) / FLOORS
-  set floor-height world-height - 2 ; top and bottom edges
-  print (list "height" floor-height "width" floor-width)
-  bitmap:copy-to-pcolors img false
-end
 
 to init-basics
   ask patches [
@@ -357,35 +322,6 @@ to init-rail
 
 end
 
-to-report rotate-vector-clock [vector]
-  let new-x item 1 vector * 1
-  let new-y item 0 vector * -1
-  report list new-x new-y
-end
-
-to-report rotate-vector-counterclock [vector]
-  let new-x item 1 vector * -1
-  let new-y item 0 vector * 1
-  report list new-x new-y
-end
-
-to-report symmetric-vector [vector]
-  let new-x -1 * item 0 vector
-  let new-y -1 * item 1 vector
-  report list new-x new-y
-end
-
-;observer
-to-report from-to-vector [p1 p2]
-  let x [pxcor] of p2 - [pxcor] of p1
-  let y [pycor] of p2 - [pycor] of p1
-  report list x y
-end
-
-to-report vector-direction [vector]
-  report atan item 1 vector item 0 vector
-
-end
 ;patch
 to-report is-train-line-pt?
   report member? PT-TRAIN-LINE pts
@@ -635,52 +571,7 @@ to-report normalize-path [path]
 
 end
 
-to setup-configs
-  set FLOORS 3
-end
 
-to setup-constants
-
-
-  ;instantiate globals
-  set number-passengers 5
-  set number-pois 2
-
-  set train-width 3
-  set train-height 5
-  set train-gap 2
-  set train-length 2
-  set COLOR-TRAIN-LINE [0 0 255]
-  ;  set COLOR-TRAIN-LINE [0 255 0]
-  set COLOR-GROUND [255 255 255]
-  set COLOR-WALL [0 0 0]
-  set COLOR-BOUNDARY [245 0 255]
-  set COLOR-PORTAL [255 255 0]
-
-  set PCS-PLATFORM (list COLOR-GROUND COLOR-PORTAL COLOR-TRAIN-LINE)
-
-  set PT-TRAIN-LINE "TRAIN_LINE"
-  set PT-TRAIN "TRAIN"
-  set PT-PLATFORM "PLATFORM"
-  set PT-WALL "WALL"
-  set PT-BOUNDARY "BOUNDARY"
-  set PT-PORTAL "PORTAL"
-
-  set PTS-PATHABLE (list PT-GROUND PT-TRAIN PT-PORTAL)
-
-  set TT-POI "POI"
-  set TT-PORTAL "PORTAL"
-
-  set TTS-PATHABLE (list "POI" "PORTAL")
-
-  set INFINITY 999999
-end
-
-to setup-static
-  setup-configs
-  setup-constants
-  load
-end
 
 
 to setup-data

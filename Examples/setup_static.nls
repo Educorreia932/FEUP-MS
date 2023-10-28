@@ -1,0 +1,83 @@
+extensions [bitmap]
+
+globals [
+  ; config constants
+  FLOORS
+
+  ; infered config constants
+  floor-width floor-height
+  PLATFORMS
+
+  ; CONSTANTS
+  ; trains
+  train-width train-height train-gap train-length
+
+  ;patch colors
+  COLOR-TRAIN-LINE COLOR-GROUND COLOR-WALL COLOR-BOUNDARY COLOR-PORTAL
+  PCS-PLATFORM
+  ;patch type pt
+  PT-TRAIN-LINE PT-TRAIN PT-PLATFORM PT-GROUND PT-WALL PT-BOUNDARY PT-PORTAL
+  PTS-PATHABLE
+  ;turtle type tt
+  TT-POI TT-PORTAL
+  TTS-PATHABLE
+
+  ;pathing
+  pathing INFINITY
+]
+
+to setup-static
+  setup-configs
+  setup-constants
+  load
+end
+
+to setup-configs
+  set FLOORS 3
+end
+
+
+to setup-constants
+  ;instantiate globals
+  set number-passengers 5
+  set number-pois 2
+
+  set train-width 3
+  set train-height 5
+  set train-gap 2
+  set train-length 2
+  set COLOR-TRAIN-LINE [0 0 255]
+  ;  set COLOR-TRAIN-LINE [0 255 0]
+  set COLOR-GROUND [255 255 255]
+  set COLOR-WALL [0 0 0]
+  set COLOR-BOUNDARY [245 0 255]
+  set COLOR-PORTAL [255 255 0]
+
+  set PCS-PLATFORM (list COLOR-GROUND COLOR-PORTAL COLOR-TRAIN-LINE)
+
+  set PT-TRAIN-LINE "TRAIN_LINE"
+  set PT-TRAIN "TRAIN"
+  set PT-PLATFORM "PLATFORM"
+  set PT-WALL "WALL"
+  set PT-BOUNDARY "BOUNDARY"
+  set PT-PORTAL "PORTAL"
+
+  set PTS-PATHABLE (list PT-GROUND PT-TRAIN PT-PORTAL)
+
+  set TT-POI "POI"
+  set TT-PORTAL "PORTAL"
+
+  set TTS-PATHABLE (list "POI" "PORTAL")
+
+  set INFINITY 999999
+end
+
+to load
+  let img bitmap:import "4_platforms_3_floors_station.png"
+  resize-world 0 (bitmap:width img - 1) 0 (bitmap:height img - 1)
+  set floor-width (world-width - FLOORS - 1 ) / FLOORS
+  set floor-height world-height - 2 ; top and bottom edges
+  print (list "height" floor-height "width" floor-width)
+  bitmap:copy-to-pcolors img false
+end
+
