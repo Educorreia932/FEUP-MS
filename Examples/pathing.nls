@@ -1,6 +1,29 @@
 ; observer
 to init-path-finding
+  init-portals-pathfinding
   init-floors-pathfinding
+end
+
+; observer
+to init-portals-pathfinding 
+  
+  ask portals [
+    let p-a1 self
+    let connected-portals other portals with [
+      tfloor-x = [tfloor-x] of myself
+      and 
+      tfloor-y =  [tfloor-y] of myself
+    ]
+    ask connected-portals [
+      create-access-with p-a1 [
+        print (list "create access" p-a1 self myself)
+        set a1 p-a1
+        set a2 myself
+        set p-cost 0 
+        set color red 
+      ] 
+    ]
+  ]
 end
 
 ; observer
@@ -19,7 +42,16 @@ to init-floors-pathfinding
           let goal item index left-to-pathfind-to
           show goal
           let path pathfind goal
+          let normalized-path normalize-path path
           set poi-paths lput path poi-paths
+          create-findable-with goal [
+            set f1 myself
+            set f2 goal
+            set f-path normalized-path
+            set f-p-id platforms-index
+            set color green
+          ]
+          
           set index index + 1
         ]
         set init-poi-paths true
@@ -70,28 +102,28 @@ to-report pathfind [pathfind-to]
     set f-score (g-score + h-score)
     set parent 0
   ]
-
+  
   let open-set (list start-vertex)
   let closed-set []
   ask start-vertex [
     set g-score 0
     set f-score h-score
   ]
-
+  
   while [length open-set > 0 ] [
     let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
-
+    
     ask current-vertex [sprout-debugers 1 [set color black]]
     if current-vertex = goal-vertex [ ; Goal reached
       let path backtrace-path goal-vertex
       report path
     ]
-
+    
     set open-set (remove current-vertex open-set)
     set closed-set lput current-vertex closed-set
-
+    
     ask current-vertex [
-
+      
       let pathable-neighbors neighbors with [
         is-pathable
       ]
@@ -140,10 +172,10 @@ to-report normalize-path [path]
   let cur-patch item 1 path
   let prev-vector from-to-vector prev-patch cur-patch
   let prev-direction vector-direction prev-vector
-
+  
   let next-vector []
   let next-patch nobody
-
+  
   let useful-path sublist path 2 length path
   let index-useful-path 0
   foreach useful-path[
@@ -154,20 +186,22 @@ to-report normalize-path [path]
     let is-same-direction prev-direction = next-direction
     ifelse is-adjacent and is-same-direction [
       ; Normalize the path
-      set  next-vector from-to-vector prev-patch cur-patch
+      set next-vector from-to-vector prev-patch cur-patch
     ]
     [
       ; Add to path
       set new-path lput cur-patch new-path
-      set prev-direction from-to-vector cur-patch next-patch
+      set prev-vector from-to-vector cur-patch next-patch
+      set prev-direction vector-direction prev-vector
     ]
-
-
+    
+    
     set index-useful-path index-useful-path + 1
     set cur-patch next-patch
-
+    
   ]
+  
   set new-path lput last useful-path new-path
   report new-path
-
+  
 end
