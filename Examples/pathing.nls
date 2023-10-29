@@ -862,9 +862,9 @@ to-report p-pathfind-better [start-vertex goal-vertex]
 ;          user-message (list "inside" self "neighbor of" current-vertex "->" current-parent)
           if current-parent != 0 [
             if is-straight-path current-parent self [
-              let new-tentative-g distance current-parent
+              let new-tentative-g [g-score] of current-parent + distance current-parent
               if new-tentative-g <= tentative-g [
-                set tentative-g distance current-parent 
+                set tentative-g new-tentative-g
                 set new-parent current-parent
                 show (list "found straighter path from" current-parent "to" self "instead of" current-vertex "->" current-parent)
 ;                user-message (list "found straighter path from" current-parent "to" self "instead of" current-vertex "->" current-parent)
@@ -886,6 +886,31 @@ to-report p-pathfind-better [start-vertex goal-vertex]
   show (list "couldn't find" start-vertex goal-vertex)
   report []
 end
+
+;; observer
+;to-report get-straightened-parent [cur-parent to-straighten]
+;  let pre-parent [parent] of cur-parent
+;  let straightened false
+;  while [not straightened] [
+;    if pre-parent = 0 [
+;      report cur-parent 
+;    ]
+;    ask to-straighten [
+;      if is-straight-path pre-parent to-straighten [
+;        let new-g distance pre-parent
+;        let pre-g [g-score] of cur-parent + distance cur-parent
+;        ifelse new-g <= pre-g [
+;          set pre-parent [parent] of pre-parent
+;        ]
+;        [
+;          set straightened true
+;        ]
+;      ]
+;    ]
+;  ]
+;  report cur-parent
+;end
+
 
 ; observer
 to-report is-straight-path [start-vertex goal-vertex]
