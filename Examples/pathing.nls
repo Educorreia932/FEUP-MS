@@ -747,16 +747,11 @@ to-report _p-pathfind-natural-turtle [start-vertex goal-vertex]
           set pcolor straight-to-goal-patch-prev-color
         ]
         
+        let collision-patches-collisions filter [ collision-patch -> not [is-pathable] of collision-patch] collision-patches  
         ifelse (
           not [is-pathable] of straight-to-goal-patch
           or 
-          not [is-pathable] of straight-to-goal-patch-left
-          or 
-          not [is-pathable] of straight-to-goal-patch-right
-          or 
-          not [is-pathable] of straight-to-goal-patch-left-2
-          or 
-          not [is-pathable] of straight-to-goal-patch-right-2
+          not empty? collision-patches-collisions
         )
           [
             ; continue algorithm 
