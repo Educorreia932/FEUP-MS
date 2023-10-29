@@ -11,6 +11,15 @@ to-report rotate-vector-counterclock [vector]
   report list new-x new-y
 end
 
+; observer
+to-report rotate-vector [vector angle]
+  let x1 item 0 vector
+  let y1 item 1 vector
+  let x2 (cos angle) * x1 - (sin angle) * y1
+  let y2 (sin angle) * x1 + (cos angle) * y1
+  report list x2 y2 
+end
+
 to-report symmetric-vector [vector]
   let new-x -1 * item 0 vector
   let new-y -1 * item 1 vector
@@ -26,4 +35,35 @@ end
 
 to-report vector-direction [vector]
   report atan item 1 vector item 0 vector
+end
+
+; observer
+to-report vector-heading [vector]
+  let angle vector-direction vector
+  let _heading ( -1 * angle + 90)
+  report _heading
+end
+; observer
+to-report distance-vector [vector]
+  let x item 0 vector
+  let y item 1 vector
+  report sqrt(x * x + y * y)
+end
+
+; observer
+to-report normalize-vector [vector]
+  let magnitude distance-vector vector
+  let x item 0 vector
+  let y item 1 vector
+  report (list (x / magnitude) (y / magnitude))  
+end
+
+; observer
+to-report to-radians [angle]
+  report angle * pi / 180
+end
+
+; observer
+to-report to-degrees [angle]
+  report 180 * angle / pi  
 end
