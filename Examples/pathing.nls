@@ -445,6 +445,13 @@ to show-path [path]
     ] 
   set index index + 1
   ]
+  
+  ask last path [
+    sprout-debugers 1 [
+      set color red
+      set shape "flag"
+    ] 
+  ]
 end
 
 ; observer
