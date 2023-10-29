@@ -1,9 +1,4 @@
-__includes ["vector_utils.nls" "setup_static.nls" "pathing.nls" "breeds.nls" "intersects.nls"]
-
-globals [
-  ; VARAIABLES
-  number-passengers number-pois left-to-spawn
-]
+__includes ["vector_utils.nls" "setup_static.nls" "pathing.nls" "breeds.nls" "intersects.nls" "setup_run.nls"]
 
 to init-basics
   ask patches [
@@ -403,114 +398,15 @@ to setup-data
   init-portals
   init-lines
   init-path-finding
+
 end
 
-to setup-run
-  ;  set left-to-spawn number-passengers
-  ;  init-pois
-  ;  init-passengers
-  reset-ticks
-end
 
 to setup
   ca
   setup-static
   setup-data
   setup-run
-end
-
-to init-pois
-  let poi-index 0
-  repeat number-pois [
-    print poi-index
-    let side poi-index mod 2
-    create-a-poi-in-side side
-    set poi-index poi-index + 1
-  ]
-end
-
-to create-a-poi-in-side [side]
-  let x min-pxcor ; default left side
-  if side = 1
-  [
-    set x max-pxcor
-  ]
-  create-a-poi x random-ycor
-end
-to create-a-poi [x y]
-  create-pois 1 [
-    set empty true
-    set to-spawn []
-    set to-despawn []
-    setxy x y
-    set shape "square"
-    set color red
-  ]
-end
-
-to init-passengers
-
-  repeat number-passengers [
-    let to-be-source one-of pois
-    let to-be-destination one-of pois with [self != to-be-source]
-
-    create-passengers 1 [
-      set source to-be-source
-      set destination to-be-destination
-      set spawned false
-      set color pink
-      setxy [xcor] of source  [ycor] of source
-    ]
-
-  ]
-  ask pois [
-    set to-spawn passengers with [source = myself]
-    set to-despawn passengers with [destination = myself]
-  ]
-end
-
-
-to spawn-passenger
-  set spawned true
-  show "spawned"
-end
-
-to spawn-passengers
-  if left-to-spawn = 0 [
-    stop
-  ]
-
-  ask pois [
-    ; TODO
-    show list "passengers here:" passengers-here
-    ifelse any? passengers-here with [spawned = true] [
-      print list "self" self
-
-    ]
-    [
-      if any? to-spawn with [spawned = false][
-        print list "to be spanwed" passengers-here with [spawned = false]
-        ask one-of to-spawn [
-          spawn-passenger
-        ]
-        print "exiting pois"
-      ]
-    ]
-
-  ]
-  ;let passengers-to-spawn passengers with [spawned = false]
-  ;print list "length" count passengers-to-spawn
-  ;ask passengers-to-spawn [
-  ;  ask source [
-  ;   ifelse empty [
-  ;       show "is empty"
-  ;       set empty false
-  ;     ]
-  ;     [
-  ;       show "is full"
-  ;    ]
-  ;  ]
-  ; ]
 end
 
 
@@ -521,13 +417,13 @@ to go
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-184
-72
-929
-331
+310
+34
+1483
+439
 -1
 -1
-7.84043
+12.433333333333334
 1
 10
 1
@@ -684,23 +580,6 @@ NIL
 1
 
 BUTTON
-430
-622
-577
-655
-NIL
-init-normalized-paths
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
 78
 218
 161
@@ -775,57 +654,6 @@ BUTTON
 321
 NIL
 init-grounds\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-211
-341
-514
-374
-NIL
-show p-platform-pathfind patch 16 20 patch 79 8
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-671
-356
-967
-389
-NIL
-show p-platform-pathfind patch 16 6 patch 16 8
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-397
-390
-693
-423
-NIL
-show p-platform-pathfind patch 16 6 patch 79 8
 NIL
 1
 T
