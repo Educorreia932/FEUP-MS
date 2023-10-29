@@ -74,11 +74,16 @@ to init-grounds
   ]
 end
 
+; patch
+to-report p-platform
+  let platform-index position PT-PLATFORM pts
+  let platform-id item platform-index pts-ids
+  report platform-id
+end
+
 ; turtle
 to-report t-platform
-  let platform-index position PT-PLATFORM [pts] of patch-here
-  let platform-id item platform-index [pts-ids] of patch-here
-  report platform-id
+  report [p-platform] of patch-here
 end
 
 ; patch
