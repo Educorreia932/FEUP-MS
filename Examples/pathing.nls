@@ -531,3 +531,125 @@ to-report distance-path [path]
   ]
   report total-distance
 end
+
+; observer
+to start-p-pathfind-natural [start-vertex goal-vertex]
+  ask patches with [
+    is-pathable 
+    and
+    p-platform = [p-platform] of start-vertex
+  ] [
+    set g-score infinity
+    set h-score h-distance goal-vertex
+    set f-score (g-score + h-score)
+    set parent 0
+  ]  
+end
+
+; observer
+to-report p-pathfind-natural [start-vertex goal-vertex]
+  start-p-pathfind-natural start-vertex goal-vertex
+  report _p-pathfind-natural start-vertex goal-vertex
+end
+
+to-report _p-pathfind-natural [start-vertex goal-vertex]
+  user-message (list start-vertex goal-vertex)
+  let open-set (list start-vertex)
+  let closed-set []
+  
+  ask start-vertex [
+    set g-score 0
+    set f-score h-score 
+  ]
+  
+  let path []
+  let found-path false
+  while [length open-set > 0 ] [
+    let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
+    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+    
+    if current-vertex = goal-vertex [ ; Goal reached
+      set path backtrace-path start-vertex goal-vertex
+      report path
+    ]
+    
+    set open-set (remove current-vertex open-set)
+    set closed-set lput current-vertex closed-set
+    
+    ask current-vertex [
+      ; try and move directly towards the end
+      let goal-direction from-to-vector self goal-vertex
+      let goal-heading vector-heading goal-direction
+      let normalized-goal-direction normalize-vector goal-direction
+      show (list "goal" goal-vertex "goal direction" goal-direction "heading" goal-heading)
+      
+      let prev-straight-to-goal-patch nobody
+      let uninterrupted-path true
+      let uninterrupted-path-length 1
+      while [uninterrupted-path] [
+        let straight-to-goal-patch patch-at-heading-and-distance goal-heading uninterrupted-path-length
+        show (list "strait to goal" straight-to-goal-patch "path length" uninterrupted-path-length)
+        
+        ifelse (not [is-pathable] of straight-to-goal-patch)
+          [
+            ; continue algorithm 
+            print "hit wall!"
+            set uninterrupted-path false
+            ifelse prev-straight-to-goal-patch != nobody [
+              ; managed to get a more efficient direct route to the previous patch
+              let _ _p-pathfind-natural current-vertex prev-straight-to-goal-patch
+              set open-set lput prev-straight-to-goal-patch open-set
+            ]
+            [
+              print "normal a-star"
+              let pathable-neighbors neighbors with [
+                is-pathable
+              ]
+              ;      ask pathable-neighbors
+              ask neighbors with [is-pathable] ; BUG for some reason it's not working with the variable?
+              [
+                if not member? self closed-set [
+                  let tentative-g [g-score] of current-vertex + distance current-vertex
+                  if not member? self open-set or tentative-g < g-score [
+                    set g-score tentative-g
+                    set f-score h-score + g-score
+                    set parent current-vertex
+                    if not member? self open-set [
+                      set open-set lput self open-set
+                    ]
+                  ]
+                ]
+                
+              ]
+            ]
+        ]
+        [     
+          ; is pathable   
+          if straight-to-goal-patch = goal-vertex [
+            ; is pathable and got to goal
+            print "found goal"
+            set uninterrupted-path false ; interrupted by goal!
+            
+            ; arrived at destination in a straight line
+            ask straight-to-goal-patch [
+              set parent current-vertex
+              set path backtrace-path start-vertex goal-vertex
+              set found-path true
+            ]
+          ]
+          set uninterrupted-path-length uninterrupted-path-length + 1
+          set prev-straight-to-goal-patch straight-to-goal-patch
+        ]
+        
+        
+      ]
+    ]
+    
+    if found-path [
+      report path
+    ]
+    
+  ]
+  show (list "couldn't find" start-vertex goal-vertex)
+  report path
+end
