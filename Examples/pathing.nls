@@ -1,7 +1,7 @@
 ; observer
 to init-path-finding
   init-portals-pathfinding
-  init-floors-pathfinding
+  init-floors-pathfinding-better
 end
 
 ; observer
@@ -32,7 +32,7 @@ to init-floors-pathfinding
     let path-found-turtles []
     let poi-turtles turtles with [member? tt TTS-PATHABLE and t-platform = platforms-index]
     let poi-turtles-with-no-paths poi-turtles with [init-poi-paths = false]
-    while [count poi-turtles-with-no-paths > 0 ][
+    while [count poi-turtles-with-no-paths > 0 ][ 
       ask one-of poi-turtles-with-no-paths[
         let left-to-pathfind-to [self] of other poi-turtles-with-no-paths
         let index 0
@@ -60,6 +60,44 @@ to init-floors-pathfinding
     set platforms-index platforms-index + 1
   ]
 end
+
+; observer
+to init-floors-pathfinding-better
+  let platforms-index 0
+  repeat PLATFORMS [
+    let path-found-turtles []
+    let poi-turtles turtles with [member? tt TTS-PATHABLE and t-platform = platforms-index]
+    let n count poi-turtles
+    ask poi-turtles [
+      let from-turtle self
+      ask other poi-turtles [
+        let to-turtle self
+        if not findable-neighbor? from-turtle [
+          
+          create-findable-with from-turtle [
+            let path []
+            ask from-turtle [
+              set path pathfind-better from-turtle
+            ]
+            let path-cost distance-path path
+            set f1 to-turtle
+            set f2 from-turtle
+            set f-path path
+            set f-cost path-cost
+            set f-p-id platforms-index
+            
+          ] 
+        ]
+      ] 
+    ]
+    set platforms-index platforms-index + 1
+  ]
+  ask findables [hide-link]
+  
+end
+
+
+
 
 ; observer
 to-report adjacent [p1 p2]
@@ -100,6 +138,14 @@ to-report pathfind [pathfind-to]
   let start-vertex patch-here
   let goal-vertex [patch-here] of pathfind-to
   report p-pathfind start-vertex goal-vertex
+end
+
+; turtle
+to-report pathfind-better [pathfind-to]
+  ask debugers [die]
+  let start-vertex patch-here
+  let goal-vertex [patch-here] of pathfind-to
+  report p-pathfind-better start-vertex goal-vertex
 end
 
 ; observer
@@ -568,9 +614,9 @@ to-report p-pathfind-better [start-vertex goal-vertex]
   while [length open-set > 0 ] [
 
     let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
-    show (list "current-vertex" current-vertex "->" [parent] of current-vertex)    
+;    show (list "current-vertex" current-vertex "->" [parent] of current-vertex)    
 ;    user-message (list "current-vertex" current-vertex "->" [parent] of current-vertex)    
-    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+;    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
     
     if current-vertex = goal-vertex [ ; Goal reached
       let path backtrace-path start-vertex goal-vertex
@@ -591,7 +637,7 @@ to-report p-pathfind-better [start-vertex goal-vertex]
           let tentative-g [g-score] of current-vertex + distance current-vertex
           let current-parent [parent] of current-vertex
           let new-parent current-vertex
-          show (list "inside" self "neighbor of" current-vertex "->" current-parent)
+;          show (list "inside" self "neighbor of" current-vertex "->" current-parent)
 ;          user-message (list "inside" self "neighbor of" current-vertex "->" current-parent)
           if current-parent != 0 [
             if is-straight-path current-parent self [
@@ -599,7 +645,7 @@ to-report p-pathfind-better [start-vertex goal-vertex]
               if new-tentative-g <= tentative-g [
                 set tentative-g new-tentative-g
                 set new-parent current-parent
-                show (list "found straighter path from" current-parent "to" self "instead of" current-vertex "->" current-parent)
+;                show (list "found straighter path from" current-parent "to" self "instead of" current-vertex "->" current-parent)
 ;                user-message (list "found straighter path from" current-parent "to" self "instead of" current-vertex "->" current-parent)
               ]
             ]
