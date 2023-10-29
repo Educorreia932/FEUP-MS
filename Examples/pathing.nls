@@ -124,7 +124,7 @@ to-report p-pathfind [start-vertex goal-vertex]
     ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
     
     if current-vertex = goal-vertex [ ; Goal reached
-      let path backtrace-path goal-vertex
+      let path backtrace-path start-vertex goal-vertex
       report path
     ]
     
@@ -132,11 +132,12 @@ to-report p-pathfind [start-vertex goal-vertex]
     set closed-set lput current-vertex closed-set
     
     ask current-vertex [
-      
       let pathable-neighbors neighbors with [
         is-pathable
       ]
-      ask pathable-neighbors[
+;      ask pathable-neighbors
+      ask neighbors with [is-pathable] ; BUG for some reason it's not working with the variable?
+      [
         if not member? self closed-set [
           let tentative-g [g-score] of current-vertex + distance current-vertex
           if not member? self open-set or tentative-g < g-score [
@@ -155,16 +156,46 @@ to-report p-pathfind [start-vertex goal-vertex]
   report []
 end
 
+; patch
+to-report p-is-portal?
+  report any? portals-here
+end
+
+; patch 
+to-report p-portal-accesses-portals
+  let source-portal one-of portals-here
+  let accessible-portals []
+  if source-portal != nobody [
+    ask source-portal [
+      set accessible-portals access-neighbors
+    ]
+  ]
+  report accessible-portals
+end 
+
+; patch
+to-report p-portal-findables-portals
+  let source-portal one-of portals-here
+  let findable-portals []
+  if source-portal != nobody [
+    ask source-portal [
+      let p-portal-findables findable-neighbors
+      set findable-portals p-portal-findables with [is-portal? self]
+    ] 
+  ]
+  report findable-portals
+end
 
 ; patch
 to-report p-platform-neighbors [nodes]
   let neighbor-nodes 0
-  ifelse any? portals-here [
+  ifelse p-is-portal? [
     let portal-node one-of portals-here
-    set neighbor-nodes nodes with [
+      print" try"
+    set neighbor-nodes other nodes with [
       p-platform = [p-platform] of myself
       or
-      member? portal-node access-neighbors 
+      member? portal-node p-portal-accesses-portals
     ]
   ]
   [
@@ -172,69 +203,227 @@ to-report p-platform-neighbors [nodes]
       p-platform = [p-platform] of myself 
     ]
   ]
-  report neighbor-nodes
+  report other neighbor-nodes
 end 
 
 ; patch 
 to-report p-distance-platform [destination-patch]
   let _distance 0
   ifelse p-platform = [p-platform] of destination-patch [
-      ; normal pathfind
+    ; normal pathfind
+    show "normal pathfind"
     let path p-pathfind self destination-patch
     set _distance distance-path path
   ][
+    let source-portal one-of portals-here
     let destination-portal one-of [portals-here] of destination-patch
-    set _distance [p-cost] of access-with destination-portal
+    ask source-portal [
+      set _distance [p-cost] of access-with destination-portal
+    ]
   ]
   report _distance
 end
 
+;to-report distance-portals [p1 p2]
+;  let _distance-portal 0
+;  ask p1 [
+;  let portal-link access-with p2
+;    ifelse portal-access != nobody [
+;      set _distance-portal [p-cost] of portal-access
+;    ]
+;    [
+;      set portal-link findable-with p2
+;      
+;    ]
+;  ]
+;end
+
+; observer 
+to reset-p-platform-pathfind
+  ask meta-pois [die]
+  ask pathables [die]
+end
 ; observer
 ; TODO test
 to-report p-platform-pathfind [start-node goal-node]
+  ; print "#############"
+  reset-show-paths
+  reset-p-platform-pathfind
+  let open-set []
   let nodes patches with [
-    any? portals-here 
+    p-is-portal? 
     or 
     self = start-node
     or 
     self = goal-node
   ] 
   
+  
   ask nodes [
+    sprout-meta-pois 1 []
+  ]
+  
+  ask meta-pois[
+    let this-meta-poi self
+    let other-meta-pois other meta-pois
+;    set meta-g-score 0
+;    set meta-parent 0
+;    set open-set fput self open-set
+    ask patch-here [
+      let this-patch self
+      ifelse p-is-portal?[
+        let this-portal one-of portals-here
+        let accessible-portals p-portal-accesses-portals
+        ask accessible-portals [
+          let portal-access access-with this-portal
+          let portal-access-cost [p-cost] of portal-access
+          ask one-of meta-pois-here [
+            create-pathable-with this-meta-poi [
+              set pathable-cost portal-access-cost
+              set color [0 255 255]
+            ]  
+          ]
+        ]
+        
+        let findable-portals p-portal-findables-portals
+        ask findable-portals [
+          let portal-findable findable-with this-portal
+          let portal-findable-cost [f-cost] of portal-findable
+          ask one-of meta-pois-here [
+            create-pathable-with this-meta-poi [
+              set pathable-cost portal-findable-cost
+              set color [0 255 255]
+            ]   
+          ]
+        ]
+      ]
+      [
+        ask other-meta-pois with [[p-platform] of [patch-here] of self = [p-platform] of this-patch] [
+          let path p-pathfind this-patch [patch-here] of self
+          ;          let p-platform-meta-poi one-of [portals-here] of p-platform-neighbor-node
+          ;          if p-platform-meta-poi = nobody [
+          ;            set p-platform-meta-poi  one-of [meta-pois-here] of p-platform-neighbor-node
+          ;          ]
+          let normalized-path normalize-path path
+          let normalized-path-cost distance-path normalized-path
+          ;          show (list p-platform-meta-poi p-platform-neighbor-node)
+          create-pathable-with this-meta-poi [
+            set pathable-cost normalized-path-cost
+            set color [0 255 255]
+          ]
+        ]
+      ]
+    ]
+  ]
+;        ask p-portal-accesses-portals [ 
+;        ]
+;        ask 
+;        ask other meta-pois with [[p-is-portal?] of patch-here] [
+;          let other-portal one-of [portals-here] of patch-here
+;          ask other-portal [
+;            show (list "other this" other-portal this-portal)
+;            let other-access-cost [p-cost] of access-with this-portal
+;            create-pathable-with this-portal [
+;              set pathable-cost other-access-cost
+;            ]  
+;          ]
+;        ]
+;      ]
+;    ]
+;    [
+;      ; get findables to all others in same platform
+;      let p-platform-neighbors-nodes [self] of p-platform-neighbors nodes
+;      show (list "neighbornodes" p-platform-neighbors-nodes)
+;      foreach p-platform-neighbors-nodes [ p-platform-neighbor-node ->
+;        let path p-pathfind patch-here p-platform-neighbor-node
+;        let p-platform-meta-poi one-of [portals-here] of p-platform-neighbor-node
+;        if p-platform-meta-poi = nobody [
+;          set p-platform-meta-poi  one-of [meta-pois-here] of p-platform-neighbor-node
+;        ]
+;        let normalized-path normalize-path path
+;        let normalized-path-cost distance-path normalized-path
+;        show (list p-platform-meta-poi p-platform-neighbor-node)
+;        create-pathable-with p-platform-meta-poi [
+;          set pathable-cost normalized-path-cost
+;          set color [0 255 255]
+;        ]
+;      ]
+;    ] 
+;  ]
+  
+  ask nodes [ 
     set g-score infinity
-    set parent 0 
+    set parent 0
+    set open-set fput self open-set
   ]
   
   ask start-node [
     set g-score 0
   ]
   
-  let open-set (list start-node)
-  let closed-set []
-  
+  reset-show-paths
+  let index -1
   while [not empty? open-set ] [
-    let current-node min-one-of open-set [g-score]
+    set index index + 1
+    let current-node first sort-by [[t1 t2] -> [g-score] of t1 < [g-score] of t2] open-set
     ask current-node [sprout-debugers 1 [set color black]] ; DEBUG
     
-    set open-set (remove current-node open-set)
+    ; show (list "index" index "node" current-node)
+    if current-node = goal-node [
+;      show "found"
+;      ask goal-node [        show (list "goal-node says" parent g-score)      ] ;debug
+      
+      let path backtrace-path start-node goal-node
+      
+      report path
+    ]
     
-    let platform-neighbor-nodes p-platform-neighbors nodes
-    let not-explored-neighbor-nodes filter [x -> member? x platform-neighbor-nodes] open-set
-    ask not-explored-neighbor-nodes [
-      let edge-distance p-distance-platform current-node
-      let alt [g-score] of current-node + edge-distance
-      if alt < g-score [
-        set g-score alt
-        set parent current-node
+    set open-set (remove current-node open-set)
+;    show (list "open-set" open-set)
+    
+    
+    
+    ask current-node [
+      let current-poi one-of [meta-pois-here] of current-node
+      let neighbor-meta-pois [pathable-neighbors] of current-poi
+      let neighbor-nodes [patch-here] of neighbor-meta-pois
+      let not-explored-neighbor-nodes filter [x -> member? x neighbor-nodes] open-set
+;      show (list "neighbors" neighbor-nodes "not-explored" not-explored-neighbor-nodes)
+      foreach not-explored-neighbor-nodes [ x -> 
+        ask x [
+          ask one-of meta-pois-here[ 
+            let pathable-edge pathable-with current-poi
+            let edge-distance [pathable-cost] of pathable-edge
+            let alt [g-score] of current-node + edge-distance
+;            show (list "edge-distance" edge-distance "alt" alt)
+            if alt < g-score [
+              set g-score alt
+              set parent current-node
+            ]
+          ]
+        ]
       ]
     ]
     
-    
-    
+    ;    ask current-node [
+    ;      let platform-neighbor-nodes p-platform-neighbors nodes
+;      let not-explored-neighbor-nodes filter [x -> member? x platform-neighbor-nodes] open-set
+;      show (list "neighbors" platform-neighbor-nodes "not-explored" not-explored-neighbor-nodes)
+;      foreach not-explored-neighbor-nodes [ x -> 
+;        ask x [
+;          let edge-distance p-distance-platform current-node ; TODO change
+;          let alt [g-score] of current-node + edge-distance
+;          show (list "edge-distance" edge-distance "alt" alt)
+;          if alt < g-score [
+;            set g-score alt
+;            set parent current-node
+;          ]
+;        ]
+;      ]
+;    ]
   ]
-  
-  let path backtrace-path goal-node
-  report path
+;  show "empty"
+  report []
   
 end
 

@@ -151,8 +151,8 @@ end
 ; observer
 to-report get-centroid [patches-set]
 
-  let x-sum 0
-  let y-sum 0
+ let x-sum 0
+ let y-sum 0
 
   ask patches-set [
     set x-sum x-sum + pxcor
@@ -403,7 +403,6 @@ to setup-data
   init-portals
   init-lines
   init-path-finding
-  init-normalized-paths
 end
 
 to setup-run
@@ -522,13 +521,13 @@ to go
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-205
-135
-930
-388
+184
+72
+929
+331
 -1
 -1
-7.63
+7.84043
 1
 10
 1
@@ -685,10 +684,10 @@ NIL
 1
 
 BUTTON
-78
-428
-225
-461
+430
+622
+577
+655
 NIL
 init-normalized-paths
 NIL
@@ -776,6 +775,57 @@ BUTTON
 321
 NIL
 init-grounds\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+211
+341
+514
+374
+NIL
+show p-platform-pathfind patch 16 20 patch 79 8
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+671
+356
+967
+389
+NIL
+show p-platform-pathfind patch 16 6 patch 16 8
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+397
+390
+693
+423
+NIL
+show p-platform-pathfind patch 16 6 patch 79 8
 NIL
 1
 T

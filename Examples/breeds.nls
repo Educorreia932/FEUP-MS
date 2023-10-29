@@ -7,6 +7,7 @@ breed [portals portal]
 breed [portal-cells portal-cell]
 breed [platformers platformer]
 breed [debugers debuger]
+breed [meta-pois meta-poi]
 
 passengers-own [source destination spawned]
 pois-own [to-spawn to-despawn empty ]
@@ -19,6 +20,9 @@ turtles-own [
   tfloor-id tfloor-x tfloor-y
   tt poi-paths init-poi-paths
 ]
+meta-pois-own [
+ meta-g-score meta-parent meta-born-from
+]
 patches-own [
   pfloor-id pfloor-x pfloor-y
   pts pts-ids number-pt
@@ -28,8 +32,10 @@ patches-own [
 ;; links
 undirected-link-breed [findables findable]
 undirected-link-breed [accesses access]
+undirected-link-breed [pathables pathable]
 
 findables-own [f1 f2 f-path f-cost f-p-id ]
 accesses-own [a1 a2 p-cost]
+pathables-own [pathable-cost]
 
 links-own [link-type]
