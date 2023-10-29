@@ -1,4 +1,4 @@
-__includes ["vector_utils.nls" "setup_static.nls" "pathing.nls" "breeds.nls"]
+__includes ["vector_utils.nls" "setup_static.nls" "pathing.nls" "breeds.nls" "intersects.nls"]
 
 globals [
   ; VARAIABLES
