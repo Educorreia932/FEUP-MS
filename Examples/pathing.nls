@@ -121,7 +121,7 @@ to-report p-pathfind [start-vertex goal-vertex]
   while [length open-set > 0 ] [
     let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
     
-    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+;    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
     
     if current-vertex = goal-vertex [ ; Goal reached
       let path backtrace-path start-vertex goal-vertex
@@ -731,7 +731,7 @@ to-report _p-pathfind-natural-turtle [start-vertex goal-vertex]
         ask straight-to-goal-patch [
           set pcolor green
         ]
-        user-message ""
+;        user-message ""
         
         let collision-patches-index 0
         repeat length collision-patches [
@@ -816,7 +816,119 @@ to-report _p-pathfind-natural-turtle [start-vertex goal-vertex]
   report path
 end
 
+; observer
+to-report p-pathfind-better [start-vertex goal-vertex]
+  ask patches with [is-pathable] [
+    set g-score infinity
+    set h-score h-distance goal-vertex
+    set f-score (g-score + h-score)
+    set parent 0
+  ]
+  
+  let open-set (list start-vertex)
+  let closed-set []
+  ask start-vertex [
+    set g-score 0
+    set f-score h-score
+  ]
+  
+  while [length open-set > 0 ] [
 
+    let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
+    show (list "current-vertex" current-vertex "->" [parent] of current-vertex)    
+;    user-message (list "current-vertex" current-vertex "->" [parent] of current-vertex)    
+    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+    
+    if current-vertex = goal-vertex [ ; Goal reached
+      let path backtrace-path start-vertex goal-vertex
+      report path
+    ]
+    
+    set open-set (remove current-vertex open-set)
+    set closed-set lput current-vertex closed-set
+    
+    ask current-vertex [
+      let pathable-neighbors neighbors with [
+        is-pathable
+      ]
+;      ask pathable-neighbors
+      ask neighbors4 with [is-pathable] ; BUG for some reason it's not working with the variable?
+      [
+        if not member? self closed-set [
+          let tentative-g [g-score] of current-vertex + distance current-vertex
+          let current-parent [parent] of current-vertex
+          let new-parent current-vertex
+          show (list "inside" self "neighbor of" current-vertex "->" current-parent)
+;          user-message (list "inside" self "neighbor of" current-vertex "->" current-parent)
+          if current-parent != 0 [
+            if is-straight-path current-parent self [
+              let new-tentative-g distance current-parent
+              if new-tentative-g <= tentative-g [
+                set tentative-g distance current-parent 
+                set new-parent current-parent
+                show (list "found straighter path from" current-parent "to" self "instead of" current-vertex "->" current-parent)
+;                user-message (list "found straighter path from" current-parent "to" self "instead of" current-vertex "->" current-parent)
+              ]
+            ]
+          ]
+          if not member? self open-set or tentative-g < g-score [
+            set g-score tentative-g
+            set f-score h-score + g-score
+            set parent new-parent
+            if not member? self open-set [
+              set open-set lput self open-set
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+  show (list "couldn't find" start-vertex goal-vertex)
+  report []
+end
+
+; observer
+to-report is-straight-path [start-vertex goal-vertex]
+  let start-pos (list ([pxcor] of start-vertex) ([pycor] of start-vertex))
+  let goal-pos (list ([pxcor] of goal-vertex) ([pycor] of goal-vertex))
+  let is-straight is-straight-path-pos start-pos goal-pos
+  report is-straight
+end
+
+; observer
+to-report is-straight-path-pos [start-pos goal-pos]
+  let goal-step-length 0.3
+  let goal-vector subtract-vector goal-pos start-pos
+  let goal-distance-squared distance-vector-squared goal-vector
+  let normalized-goal-vector normalize-vector goal-vector
+  let goal-step scale-vector normalized-goal-vector goal-step-length
+  
+;  show (list start-pos "->" goal-pos "vector" goal-vector "normalized vector" normalized-goal-vector "goal-step" goal-step)
+  if does-intersect-turtle-pos-around start-pos [
+    report false 
+  ]
+  if does-intersect-turtle-pos-around goal-pos [
+    report false 
+  ]
+  let prev-pos start-pos
+  while [true] [
+    let cur-pos add-vector prev-pos goal-step
+    let cur-vector subtract-vector cur-pos start-pos
+    let cur-distance-squared distance-vector-squared cur-vector
+;    show (list "cur pos" cur-pos "cur vector" cur-vector "cur-distance" sqrt cur-distance-squared "goal-distance" sqrt goal-distance-squared)
+    if cur-distance-squared >= goal-distance-squared[
+      ; overshot goal
+      report true 
+    ]
+    
+    if does-intersect-turtle-pos-around cur-pos [
+      report false 
+    ]
+    set prev-pos cur-pos
+;    show (list start-pos "-" cur-pos "->" goal-pos)
+  ]
+  report true
+end
 
 
 

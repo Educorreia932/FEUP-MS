@@ -43,6 +43,7 @@ to-report vector-heading [vector]
   let _heading ( -1 * angle + 90)
   report _heading
 end
+
 ; observer
 to-report distance-vector [vector]
   let x item 0 vector
@@ -51,11 +52,42 @@ to-report distance-vector [vector]
 end
 
 ; observer
+to-report distance-vector-squared [vector]
+  let x item 0 vector
+  let y item 1 vector
+  report x * x + y * y
+end
+
+; observer
+to-report add-vector [v1 v2]
+  let x1 item 0 v1
+  let y1 item 1 v1
+  let x2 item 0 v2
+  let y2 item 1 v2
+  report (list (x1 + x2) (y1 + y2))
+end
+
+to-report subtract-vector [v1 v2]
+  let x1 item 0 v1
+  let y1 item 1 v1
+  let x2 item 0 v2
+  let y2 item 1 v2
+  report (list (x1 - x2) (y1 - y2))
+end
+
+; observer
 to-report normalize-vector [vector]
   let magnitude distance-vector vector
   let x item 0 vector
   let y item 1 vector
   report (list (x / magnitude) (y / magnitude))  
+end
+
+; observer
+to-report scale-vector [vector scale]
+  let x item 0 vector
+  let y item 1 vector
+  report (list (x * scale) (y * scale))  
 end
 
 ; observer
