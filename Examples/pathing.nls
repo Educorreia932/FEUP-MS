@@ -670,3 +670,161 @@ to-report _p-pathfind-natural [start-vertex goal-vertex]
   show (list "couldn't find" start-vertex goal-vertex)
   report path
 end
+
+; observer
+to-report p-pathfind-natural-turtle [start-vertex goal-vertex]
+  start-p-pathfind-natural start-vertex goal-vertex
+  report _p-pathfind-natural-turtle start-vertex goal-vertex
+end
+
+to-report _p-pathfind-natural-turtle [start-vertex goal-vertex]
+  user-message (list start-vertex goal-vertex)
+  let open-set (list start-vertex)
+  let closed-set []
+  
+  ask start-vertex [
+    set g-score 0
+    set f-score h-score 
+  ]
+  
+  let path []
+  let found-path false
+  while [length open-set > 0 ] [
+    let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
+    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+    
+    if current-vertex = goal-vertex [ ; Goal reached
+      set path backtrace-path start-vertex goal-vertex
+      report path
+    ]
+    
+    set open-set (remove current-vertex open-set)
+    set closed-set lput current-vertex closed-set
+    
+    ask current-vertex [
+      ; try and move directly towards the end
+      let goal-direction from-to-vector self goal-vertex
+      let goal-heading vector-heading goal-direction
+      let normalized-goal-direction normalize-vector goal-direction
+      show (list "goal" goal-vertex "goal direction" goal-direction "heading" goal-heading)
+      
+      let prev-straight-to-goal-patch current-vertex
+      let uninterrupted-path true
+      let uninterrupted-path-size 1
+      while [uninterrupted-path] [
+        let path-length uninterrupted-path-size / 3
+        let straight-to-goal-patch patch-at-heading-and-distance goal-heading path-length
+        let straight-to-goal-patch-left [patch-at-heading-and-distance (goal-heading - 30) 1] of straight-to-goal-patch
+        let straight-to-goal-patch-left-2 [patch-at-heading-and-distance (goal-heading - 30) 0.5] of straight-to-goal-patch
+        let straight-to-goal-patch-right [patch-at-heading-and-distance (goal-heading + 30) 1] of straight-to-goal-patch
+        let straight-to-goal-patch-right-2 [patch-at-heading-and-distance (goal-heading + 30) 0.5] of straight-to-goal-patch
+        show (list "strait to goal" straight-to-goal-patch "path length" uninterrupted-path-size)
+        let collision-patches (list straight-to-goal-patch-left straight-to-goal-patch-left-2 straight-to-goal-patch-right straight-to-goal-patch-right-2)
+        let collision-patches-prev-color map [ collision-patch -> [pcolor] of collision-patch] collision-patches
+        let straight-to-goal-patch-prev-color [pcolor] of straight-to-goal-patch
+        foreach collision-patches [x -> 
+          ask x [
+            set pcolor red 
+          ]
+        ]
+        
+        ask straight-to-goal-patch [
+          set pcolor green
+        ]
+        user-message ""
+        
+        let collision-patches-index 0
+        repeat length collision-patches [
+          let collision-patch item collision-patches-index collision-patches
+          let collision-patch-prev-color item collision-patches-index collision-patches-prev-color
+          ask collision-patch [
+            set pcolor  collision-patch-prev-color
+          ]
+          set collision-patches-index collision-patches-index + 1
+        ]
+        ask straight-to-goal-patch [
+          
+          set pcolor straight-to-goal-patch-prev-color
+        ]
+        
+        ifelse (
+          not [is-pathable] of straight-to-goal-patch
+          or 
+          not [is-pathable] of straight-to-goal-patch-left
+          or 
+          not [is-pathable] of straight-to-goal-patch-right
+          or 
+          not [is-pathable] of straight-to-goal-patch-left-2
+          or 
+          not [is-pathable] of straight-to-goal-patch-right-2
+        )
+          [
+            ; continue algorithm 
+            print "hit wall!"
+            set uninterrupted-path false
+            ifelse prev-straight-to-goal-patch != current-vertex [
+              ; managed to get a more efficient direct route to the previous patch
+              let _ _p-pathfind-natural current-vertex prev-straight-to-goal-patch
+              set open-set lput prev-straight-to-goal-patch open-set
+            ]
+            [
+              print "normal a-star"
+              let pathable-neighbors neighbors4 with [
+                is-pathable
+              ]
+              ;      ask pathable-neighbors
+              ask neighbors4 with [is-pathable] ; BUG for some reason it's not working with the variable?
+              [
+                if not member? self closed-set [
+                  let tentative-g [g-score] of current-vertex + distance current-vertex
+                  if not member? self open-set or tentative-g < g-score [
+                    set g-score tentative-g
+                    set f-score h-score + g-score
+                    set parent current-vertex
+                    if not member? self open-set [
+                      set open-set lput self open-set
+                    ]
+                  ]
+                ]
+                
+              ]
+            ]
+        ]
+        [     
+          ; is pathable   
+          if straight-to-goal-patch = goal-vertex [
+            ; is pathable and got to goal
+            print "found goal"
+            set uninterrupted-path false ; interrupted by goal!
+            
+            ; arrived at destination in a straight line
+            ask straight-to-goal-patch [
+              set parent current-vertex
+              set path backtrace-path start-vertex goal-vertex
+              set found-path true
+            ]
+          ]
+          set uninterrupted-path-size uninterrupted-path-size + 1
+          set prev-straight-to-goal-patch straight-to-goal-patch
+        ]
+        
+        
+      ]
+    ]
+    
+    if found-path [
+      report path
+    ]
+    
+  ]
+  show (list "couldn't find" start-vertex goal-vertex)
+  report path
+end
+
+
+
+
+
+
+
+
