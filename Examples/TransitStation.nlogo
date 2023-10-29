@@ -61,6 +61,17 @@ to init-platforms
       set pts-ids lput platform-id pts-ids
       flood-multizone PT-PLATFORM platform-id PCS-PLATFORM
     ]
+
+    let platform-patches patches with [member? PT-PLATFORM PTS and p-platform = platform-id]
+    let centroid get-centroid platform-patches
+    ask centroid [
+      sprout-platformers 1 [
+        set p-p-id platform-id
+        set color [ 0 255 0 ]
+      ]
+
+    ]
+
     set non-instantiated-platform min-one-of patches with [member? pcolor PCS-PLATFORM and not member? PT-PLATFORM pts][p-index]
     set platform-id platform-id + 1
   ]

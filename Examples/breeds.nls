@@ -5,6 +5,7 @@ breed [trains train]
 breed [train-cells train-cell]
 breed [portals portal]
 breed [portal-cells portal-cell]
+breed [platformers platformer]
 breed [debugers debuger]
 
 passengers-own [source destination spawned]
@@ -13,6 +14,7 @@ trains-own [is-a-poi direction-vector]
 train-cells-own [belong-to-train]
 portals-own [portal-id portal-connect-ids]
 portal-cells-own [portal-id belong-to-portal]
+platformers-own [p-p-id]
 turtles-own [
   tfloor-id tfloor-x tfloor-y
   tt poi-paths init-poi-paths
