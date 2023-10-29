@@ -75,18 +75,21 @@ to-report h-distance [destination-patch]
   report distance destination-patch
 end
 
-;patch
+; patch
 to-report is-pathable
   report not empty? filter [i -> member? i PTS-PATHABLE] pts
 end
 
-;patch
-to-report backtrace-path [goal-vertex]
+; observer
+to-report backtrace-path [start-vertex goal-vertex]
   let path []
   let current-vertex goal-vertex
   while [current-vertex != 0] [
     set path fput current-vertex path
     set current-vertex [parent] of current-vertex
+  ]
+  if first path != start-vertex [
+    report [] 
   ]
   report path
 end
