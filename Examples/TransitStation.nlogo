@@ -419,13 +419,6 @@ to setup
   setup-data
   setup-run
 end
-
-
-to go
-  print "tick"
-  spawn-passengers
-  tick
-end
 @#$#@#$#@
 GRAPHICS-WINDOW
 310

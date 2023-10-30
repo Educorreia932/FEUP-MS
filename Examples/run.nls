@@ -1,0 +1,21 @@
+to go
+  print "tick"
+  move-passengers
+  collide-passengers
+  repel-passengers-from-wall
+  tick
+  
+end
+
+to move-passengers
+  
+end
+
+to collide-passengers
+  
+end
+
+
+to repel-passengers-from-wall
+  
+end
