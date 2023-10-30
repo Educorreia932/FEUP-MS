@@ -1,4 +1,4 @@
-__includes ["vector_utils.nls" "setup_static.nls" "pathing.nls" "breeds.nls" "intersects.nls" "setup_run.nls"]
+__includes ["vector_utils.nls" "setup_static.nls" "pathing.nls" "breeds.nls" "intersects.nls" "setup_run.nls" "run.nls"]
 
 to init-basics
   ask patches [
@@ -111,6 +111,7 @@ to-report sprout-portal
     set tfloor-x pfloor-x
     set tfloor-y pfloor-y
     set tt TT-PORTAL
+    set tt-id p-portal-id
     set poi-paths []
     set init-poi-paths false
     set shape "arrow"
@@ -320,8 +321,16 @@ to-report is-train-line-pt?
 end
 
 ; patch
+to-report p-train-line
+  let train-line-index position PT-TRAIN-LINE pts
+  let  train-line-id item  train-line-index pts-ids
+  report train-line-id
+end
+
+; patch
 to-report sprout-train [heading-vector]
   let sprouted-train ""
+  let train-id p-train-line
   sprout-trains 1 [
     ; train
     set direction-vector heading-vector
@@ -334,6 +343,7 @@ to-report sprout-train [heading-vector]
     set tfloor-x pfloor-x
     set tfloor-y pfloor-y
     set tt TT-POI
+    set tt-id train-id
     set poi-paths []
     set init-poi-paths false
     set sprouted-train self
@@ -344,6 +354,7 @@ end
 to init-train [heading-vector]
   let inited-train sprout-train heading-vector
 
+  let train-id [p-train-line] of [patch-here] of inited-train
   let heading_x item 0 heading-vector
   let heading_y item 1 heading-vector
   let outward-vector rotate-vector-clock heading-vector
@@ -369,7 +380,7 @@ to init-train [heading-vector]
               set belong-to-train inited-train
             ]
             set pts lput PT-TRAIN pts
-            set pts-ids lput 0 pts-ids
+            set pts-ids lput train-id pts-ids
           ]
         ]
         set x x + outward_x

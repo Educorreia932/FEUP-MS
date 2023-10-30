@@ -8,7 +8,7 @@ globals [
 
 ; observer
 to setup-run-constants 
-  set number-passengers 300
+  set number-passengers 5
 
 end
 
@@ -25,25 +25,28 @@ end
 
 ; observer
 to init-runnables 
+  ask train-cells [hide-turtle]
+  ask trains [hide-turtle]
   ask passengers [die]
 end
+
 ; observer
 to setup-spawning
-  show "spawning"
-  let spawner-patches patches with [member? PT-TRAIN pts]
-  repeat number-passengers [
-    ask one-of spawner-patches [
-      let sprouted-passenger sprout-passenger
-    ] 
-  ]
+  let spawner-patches patches with [not empty? filter [i -> member? i PTS-DESTINY] pts]
+    repeat number-passengers [
+      ask one-of spawner-patches [
+        let sprouted-passenger sprout-passenger
+        ask sprouted-passenger [ route-passenger]
+      ] 
+    ]
 end
 
 
 ; patch
 to-report sprout-passenger 
-  show "spawning passenger"
   let collides true
   let sprouted-passenger 0
+  let p self
   while [collides]
   [
     let random-x random-float 0.98 - 0.49 ; prevent passing to another patch due to roundings
@@ -60,8 +63,8 @@ to-report sprout-passenger
         setxy pass-x pass-y
         
         set spawned true
-        set destination one-of patches with [is-destiny]
-        set source patch-here
+        set source-patch p
+        set source [p-destination] of p
         
         set sprouted-passenger self
       ]  
@@ -71,10 +74,49 @@ to-report sprout-passenger
   
 end
 
+; passenger
+to route-passenger 
+  let pass-source source
+  let all-train-destinations trains
+  let all-destinations ( turtle-set  all-train-destinations)
+  let other-destinations all-destinations with [
+    self != pass-source
+  ]
+  
+  let chosen-destination one-of other-destinations
+  
+  set destination chosen-destination
+  set destination-patch [patch-here] of destination
+end 
+
+; patch
+to-report p-destination
+  if not is-destiny [
+    report 0
+  ]
+  if p-destiny = PT-TRAIN [
+    let id p-train-line 
+    let destiny-trains trains with [tt-id = id]
+    report one-of destiny-trains
+  ]
+  report 0
+  
+end
+
 ; patch
 to-report is-destiny
-  report not empty? filter [i -> member? i PTS-DESTINY] pts
+  report not empty? _p-destinies
 end
+
+to-report p-destiny 
+  report first _p-destinies
+end
+
+; patch
+to-report _p-destinies 
+  report filter [i -> member? i PTS-DESTINY] pts
+end
+
 
 to init-pois
   let poi-index 0
@@ -129,7 +171,6 @@ end
 
 to spawn-passenger
   set spawned true
-  show "spawned"
 end
 
 to spawn-passengers

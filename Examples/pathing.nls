@@ -109,8 +109,8 @@ to-report adjacent [p1 p2]
 end
 
 ; patch
-to-report h-distance [destination-patch]
-  report distance destination-patch
+to-report h-distance [destination-p]
+  report distance destination-p
 end
 
 ; patch
@@ -253,16 +253,16 @@ to-report p-platform-neighbors [nodes]
 end 
 
 ; patch 
-to-report p-distance-platform [destination-patch]
+to-report p-distance-platform [destination-p]
   let _distance 0
-  ifelse p-platform = [p-platform] of destination-patch [
+  ifelse p-platform = [p-platform] of destination-p [
     ; normal pathfind
     show "normal pathfind"
-    let path p-pathfind self destination-patch
+    let path p-pathfind self destination-p
     set _distance distance-path path
   ][
     let source-portal one-of portals-here
-    let destination-portal one-of [portals-here] of destination-patch
+    let destination-portal one-of [portals-here] of destination-p
     ask source-portal [
       set _distance [p-cost] of access-with destination-portal
     ]

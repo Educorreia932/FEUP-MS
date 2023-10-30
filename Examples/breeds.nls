@@ -9,7 +9,7 @@ breed [platformers platformer]
 breed [debugers debuger]
 breed [meta-pois meta-poi]
 
-passengers-own [source destination spawned]
+passengers-own [source-patch source destination destination-patch spawned]
 pois-own [to-spawn to-despawn empty ]
 trains-own [is-a-poi direction-vector]
 train-cells-own [belong-to-train]
@@ -18,7 +18,7 @@ portal-cells-own [portal-id belong-to-portal]
 platformers-own [p-p-id]
 turtles-own [
   tfloor-id tfloor-x tfloor-y
-  tt poi-paths init-poi-paths
+  tt tt-id poi-paths init-poi-paths
 ]
 meta-pois-own [
  meta-g-score meta-parent meta-born-from
