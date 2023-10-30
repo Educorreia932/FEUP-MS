@@ -92,7 +92,7 @@ to init-floors-pathfinding-better
     ]
     set platforms-index platforms-index + 1
   ]
-  ask findables [hide-link]
+  ;  ask findables [hide-link]
   
 end
 
@@ -520,6 +520,11 @@ end
 ; observer
 to reset-show-paths
   ask debugers [die]
+end
+
+; observer
+to reset-walked-paths
+  clear-drawing
 end
 
 ; observer

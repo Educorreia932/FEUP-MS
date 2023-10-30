@@ -20,6 +20,14 @@ to setup-run
   ;  set left-to-spawn number-passengers
   ;  init-pois
   ;  init-passengers
+  ask links [hide-link]
+  
+  foreach [self] of passengers [
+    pass -> 
+    reset-walked-paths
+    ask pass [show-walked-path passenger-path]
+    user-message ""
+  ]
   reset-ticks
 end
 
@@ -36,7 +44,10 @@ to setup-spawning
     repeat number-passengers [
       ask one-of spawner-patches [
         let sprouted-passenger sprout-passenger
-        ask sprouted-passenger [ route-passenger]
+        ask sprouted-passenger [ 
+        route-passenger 
+        path-passenger
+      ]
       ] 
     ]
 end
@@ -86,7 +97,9 @@ to route-passenger
   let chosen-destination one-of other-destinations
   
   set destination chosen-destination
-  set destination-patch [patch-here] of destination
+  
+  let possible-destination-patches patches with [p-destination = chosen-destination]
+  set destination-patch one-of possible-destination-patches
 end 
 
 ; patch
@@ -117,6 +130,14 @@ to-report _p-destinies
   report filter [i -> member? i PTS-DESTINY] pts
 end
 
+; passenger
+to path-passenger
+  let meta-path p-platform-pathfind source-patch destination-patch
+  show meta-path
+  set passenger-path meta-path
+;  show-walked-path meta-path
+  
+end
 
 to init-pois
   let poi-index 0

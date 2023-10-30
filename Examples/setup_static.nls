@@ -35,7 +35,7 @@ to setup-configs
   set FILE "small_station.png"
   set FILE "4_platforms_3_floors_station.png"
   ; set FILE "turtle_pathfinding_2.png"
-  set FLOORS 1
+  set FLOORS 3
 end
 
 

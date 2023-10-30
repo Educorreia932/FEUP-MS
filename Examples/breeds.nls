@@ -9,7 +9,7 @@ breed [platformers platformer]
 breed [debugers debuger]
 breed [meta-pois meta-poi]
 
-passengers-own [source-patch source destination destination-patch spawned]
+passengers-own [source-patch source destination destination-patch spawned passenger-path]
 pois-own [to-spawn to-despawn empty ]
 trains-own [is-a-poi direction-vector]
 train-cells-own [belong-to-train]
