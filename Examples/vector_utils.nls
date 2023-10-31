@@ -90,6 +90,31 @@ to-report scale-vector [vector scale]
   report (list (x * scale) (y * scale))  
 end
 
+to-report scale-to-vector [vector scale]
+  report scale-vector ( normalize-vector vector ) scale
+end
+
+to-report subtract-magnitude-from-vector [vector magnitude]
+  let original-magnitude distance-vector vector
+  if original-magnitude <= magnitude [ 
+    report (list 0 0) 
+  ]
+  let scale (original-magnitude - magnitude) / magnitude
+  let scaled-vector scale-vector vector scale
+  let subtracted-vector subtract-vector vector scaled-vector
+  let x item 0 subtracted-vector
+  let y item 1 subtracted-vector
+  report (list x y)
+end
+
+to-report repel-vector [particle-vector]
+  let particle-distance distance-vector particle-vector
+;  let force-magnitude 4 * collision-epsilon * ( (collision-sigma / particle-distance) ^ 12 - (collision-sigma / particle-distance) ^ 6 )
+   let force-magnitude collision-sigma - particle-distance
+  let _repel-vector scale-to-vector particle-vector force-magnitude
+  report _repel-vector   
+end
+
 ; observer
 to-report to-radians [angle]
   report angle * pi / 180

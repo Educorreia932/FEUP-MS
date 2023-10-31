@@ -1,15 +1,46 @@
 
 globals [
   ; VARAIABLES
+  ;PRE RUN
   number-passengers left-to-spawn
   
   number-pois
+  
+  
+  ; RUN
+  passenger-step collision-calculations-per-tick
+  collision-radius
+  collision-force-multiplier
+  collision-epsilon
+  ; infered
+  true-collision-radius   collision-sigma ; equivalent, just nomenclature
 ]
 
 ; observer
 to setup-run-constants 
-  set number-passengers 5
-
+  ; PRE RUN
+  set number-passengers 300
+  
+  ; RUN
+  set passenger-step 0.3
+  set collision-calculations-per-tick 5
+  
+  ; Collision if other agent within turtle-radius + collision-radius
+  ; If collision-radius <= turtle-radius, turtles must overlap for collision
+  ; If collision-radius > turtle-radius, turtles collide even at a distance
+  set collision-radius 0.15
+  set collision-force-multiplier 0.4
+  set collision-epsilon 0.05 ; not used
+  
+  ; inferred
+  set true-collision-radius collision-radius + turtle-radius
+  set collision-sigma collision-radius + turtle-radius
+  
+  if true-collision-radius >= 1[
+    user-message "Collision detection compromised. Collision should only be able to take place within neighbors patches of a turtle" 
+  ]
+  
+  
 end
 
 ; observer
@@ -21,13 +52,13 @@ to setup-run
   ;  init-pois
   ;  init-passengers
   ask links [hide-link]
-  
-  foreach [self] of passengers [
-    pass -> 
-    reset-walked-paths
-    ask pass [show-walked-path passenger-path]
-    user-message ""
-  ]
+;  
+;  foreach [self] of passengers [
+;    pass -> 
+;    reset-walked-paths
+;    ask pass [show-walked-path passenger-path]
+;    user-message ""
+;  ]
   reset-ticks
 end
 
@@ -68,12 +99,13 @@ to-report sprout-passenger
     if not does-intersect-turtle-pos-around pass-pos [
       set collides false
       sprout-passengers 1 [
-        set size 0.5
-        set shape "person"
+        set size turtle-size
+        set shape turtle-shape
         set color [100 255 255]
         setxy pass-x pass-y
         
         set spawned true
+        set reached-destination false
         set source-patch p
         set source [p-destination] of p
         

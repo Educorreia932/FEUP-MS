@@ -1,21 +1,103 @@
+
 to go
   print "tick"
-  move-passengers
+  ;  move-passengers
   collide-passengers
-  repel-passengers-from-wall
+  ;  repel-passengers-from-wall
+  ;  update-passengers-path
   tick
   
 end
 
-to move-passengers
+to setup-tests
+  reset-ticks
+  setup-run-constants 
+  set turtle-size 1
+  set turtle-shape "circle"
+  set turtle-radius 1
   
+  ask passengers[die]
+end
+
+to add-to-test
+  ask patch 12 14 [let _ sprout-passenger]
+end
+
+to move-passengers
+  ask moving-passengers [
+    ifelse empty? passenger-path [
+       set reached-destination true
+    ] [
+      let platform-path first passenger-path
+      let next-destination first platform-path
+      face next-destination
+      fd passenger-step
+    ]
+  ]
 end
 
 to collide-passengers
-  
+  repeat collision-calculations-per-tick [
+    ; calculate collision-vectors
+    ask moving-passengers [
+      set sum-collisions-vector (list 0 0) 
+      let self-x xcor
+      let self-y ycor
+      let possible-collision-around-passengers [passengers-here] of neighbors 
+      let possible-collision-here-passenger other [passengers-here] of patch-here 
+      let possible-collision-passengers (turtle-set possible-collision-around-passengers possible-collision-here-passenger)
+      let collision-passengers possible-collision-passengers in-radius true-collision-radius
+      let sum-x 0
+      let sum-y 0
+      ask collision-passengers [
+        let d-x abs self-x - xcor 
+        let d-y abs self-y - ycor 
+        let collision-vector (list d-x d-y)
+        let _repel-vector repel-vector collision-vector
+;        let overlap-collision-vector subtract-magnitude-from-vector collision-vector true-collision-radius
+;        let force-x item 0 overlap-collision-vector
+;        let force-y item 1 overlap-collision-vector
+;        set force-x d-x
+;        set force-y d-y
+        let force-x item 0 _repel-vector
+        let force-y item 1 _repel-vector
+        
+        
+        set sum-x sum-x + force-x
+        set sum-y sum-y + force-y
+;        show (list "    original collision" collision-vector "overlap collision" _repel-vector "sum-x sum-y" sum-x sum-y)
+      ]
+      let sum-force-x collision-force-multiplier * sum-x
+      let sum-force-y collision-force-multiplier * sum-y
+      let all-collisions-vector (list sum-force-x sum-force-y)
+      let crowdness-proportional-collisions-vector scale-vector all-collisions-vector ( 1 / ( count collision-passengers + 1))
+      set sum-collisions-vector crowdness-proportional-collisions-vector
+;      show (list "original sum-x sum-y" sum-x sum-y "multiplied force" sum-force-x sum-force-y)
+    ]
+    ; apply collision-vectors
+    ask moving-passengers [
+      let d-x item 0 sum-collisions-vector
+      let d-y item 1 sum-collisions-vector
+;      show (list "changing coors from " xcor ycor "to " (xcor + d-x) (ycor + d-y ))
+      
+      ; using clamp while repel force is not very well established, and map with no borders
+      let new-x clamp (xcor + d-x) 0 ( world-width + 1)
+      let new-y clamp (ycor + d-y) 0 ( world-height + 1)
+      set xcor new-x
+      set ycor new-y
+    ]
+  ]
 end
 
 
 to repel-passengers-from-wall
   
+end
+
+to update-passengers-path
+  
+end
+
+to-report moving-passengers
+   report passengers with [not reached-destination]
 end

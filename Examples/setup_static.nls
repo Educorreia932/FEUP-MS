@@ -14,7 +14,8 @@ globals [
   train-width train-height train-gap train-length
   
   ; turtle
-  turtle-radius
+  turtle-radius 
+  turtle-size turtle-shape ;visualization only
 
   ;patch colors
   COLOR-TRAIN-LINE COLOR-GROUND COLOR-WALL COLOR-BOUNDARY COLOR-PORTAL
@@ -33,7 +34,7 @@ globals [
 
 to setup-configs
   set FILE "small_station.png"
-  set FILE "4_platforms_3_floors_station.png"
+;  set FILE "4_platforms_3_floors_station.png"
   ; set FILE "turtle_pathfinding_2.png"
   set FLOORS 3
 end
@@ -47,6 +48,8 @@ to setup-constants
   set train-length 2
   
   set turtle-radius 0.3
+  set turtle-shape "person"
+  set turtle-size 0.5
   
   set COLOR-TRAIN-LINE [0 0 255]
   ;  set COLOR-TRAIN-LINE [0 255 0]
