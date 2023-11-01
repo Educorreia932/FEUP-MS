@@ -92,6 +92,7 @@ to collide-passengers
       let possible-collision-around-passengers [passengers-here] of neighbors 
       let possible-collision-here-passenger other [passengers-here] of patch-here 
       let possible-collision-passengers (turtle-set possible-collision-around-passengers possible-collision-here-passenger)
+      set possible-collision-passengers moving-passengers-set possible-collision-passengers
       let collision-passengers possible-collision-passengers in-radius true-collision-radius
       let sum-x 0
       let sum-y 0
@@ -146,4 +147,8 @@ end
 
 to-report moving-passengers
    report passengers with [not reached-destination]
+end
+
+to-report moving-passengers-set [passengers-set]
+  report passengers-set with [not reached-destination]
 end
