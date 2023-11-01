@@ -120,7 +120,7 @@ to-report p-platform-pathfind [start-node goal-node]
         ask accessible-portals [
           let portal-access access-with this-portal
           let portal-access-cost [p-cost] of portal-access
-          let portal-access-path (list this-portal self)
+          let portal-access-path (list ( [patch-here] of this-portal ) ( [patch-here] of self) )
           ask one-of meta-pois-here [
             create-pathable-with this-meta-poi [
               set pathable-cost portal-access-cost
