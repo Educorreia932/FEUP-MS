@@ -37,8 +37,13 @@ to move-passengers
       face next-destination
       fd passenger-step
       
+      ;TODO prevent bumping against wall?
+      
       ; Update path
       
+      ; TODO
+      ; check if destination is "good enough" at least when it comes to portals.
+      ; Maybe, have destination as a temp variable, and allow it to change in case of crowdeness
       if patch-here = next-destination [  
         set passenger-simple-path-index passenger-simple-path-index + 1
         if passenger-simple-path-index >= length platform-path [
