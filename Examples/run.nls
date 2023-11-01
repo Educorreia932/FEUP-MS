@@ -138,7 +138,31 @@ end
 
 
 to repel-passengers-from-wall
-  
+  ask moving-passengers [
+    if not ( [is-pathable] of patch-here ) [
+      ; is in wall
+      let passenger-in-wall self
+      let passenger-pos (list xcor ycor)
+      
+      ; find closest patch to repel to
+      let possible-repel-patches ( [neighbors] of patch-here ) with [is-pathable]
+      let closest-repel min-one-of possible-repel-patches [distance passenger-in-wall]
+      
+      
+      let in-wall-vector get-turtle-pos-patch-closest-vector passenger-pos closest-repel ; find the minimal vector that represents how inside the wall passenger is
+      let repel-to-wall-border-vector symmetric-vector in-wall-vector ; repel vector is the symmetric of the inside wall vector
+      let repel-from-border-vector scale-vector ( normalize-vector repel-to-wall-border-vector ) wall-collision-repel ; add some margin to get away from wall
+      let ensure-patch-repel-vector add-vector repel-to-wall-border-vector repel-from-border-vector
+
+      let d-x item 0 ensure-patch-repel-vector
+      let d-y item 1 ensure-patch-repel-vector
+      
+      let new-x xcor + d-x
+      let new-y ycor + d-y
+      
+      setxy new-x new-y
+    ]
+  ]
 end
 
 to update-passengers-path

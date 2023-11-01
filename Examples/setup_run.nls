@@ -12,6 +12,8 @@ globals [
   collision-radius
   collision-force-multiplier
   collision-epsilon
+  
+  wall-collision-repel
   ; infered
   true-collision-radius   collision-sigma ; equivalent, just nomenclature
 ]
@@ -32,6 +34,8 @@ to setup-run-constants
   set collision-force-multiplier 0.4
   set collision-epsilon 0.05 ; not used
   
+  
+  set wall-collision-repel 0.1
   ; inferred
   set true-collision-radius collision-radius + turtle-radius
   set collision-sigma collision-radius + turtle-radius
@@ -165,7 +169,7 @@ to path-passenger
   set passenger-move-delay 0
   
   show-meta-walked-path meta-path ;DEBUG
-  show "leaving path-pasenger"
+  show "leaving path-pasenger META PATH IS BAD"
 end
 
 to init-pois

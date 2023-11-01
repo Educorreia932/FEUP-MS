@@ -52,3 +52,21 @@ to-report clamp [value minimum maximum]
   let max-min-value max list max-value minimum
   report max-min-value
 end
+
+
+to-report get-turtle-pos-patch-closest-vector [t-pos p]
+  let t-x item 0 t-pos
+  let t-y item 1 t-pos
+  let p-x [pxcor] of p
+  let p-y [pycor] of p
+  let d-x abs  t-x - p-x
+  let d-y abs  t-y - p-y
+  
+  let closest-x clamp d-x -0.5 0.5
+  let closest-y clamp d-y -0.5 0.5
+  
+  let vector-x d-x - closest-x
+  let vector-y d-y - closest-y
+  
+  report (list vector-x vector-y)
+end
