@@ -1,10 +1,10 @@
 
 to go
-  print "tick"
-  ;  move-passengers
-  collide-passengers
+  print "tick" 
+  move-passengers
+  ;  collide-passengers
   ;  repel-passengers-from-wall
-  ;  update-passengers-path
+  ;  update-passengers-path 
   tick
   
 end
@@ -24,14 +24,55 @@ to add-to-test
 end
 
 to move-passengers
-  ask moving-passengers [
-    ifelse empty? passenger-path [
-       set reached-destination true
-    ] [
-      let platform-path first passenger-path
-      let next-destination first platform-path
+  ask moving-passengers [    
+    ; Get destination (assume indexs are alright)
+    let platform-path item passenger-meta-path-index passenger-meta-path
+    let next-destination item passenger-simple-path-index platform-path
+    
+    ifelse passenger-move-delay > 0 [
+      set passenger-move-delay passenger-move-delay - passenger-step ; Might be negative but that's alright
+    ]
+    [
+      ; Move
       face next-destination
       fd passenger-step
+      
+      ; Update path
+      
+      if patch-here = next-destination [  
+        set passenger-simple-path-index passenger-simple-path-index + 1
+        if passenger-simple-path-index >= length platform-path [
+          set passenger-simple-path-index 0
+          set passenger-meta-path-index passenger-meta-path-index + 1
+          ifelse passenger-meta-path-index >= length passenger-meta-path [
+            set reached-destination true
+          ]
+          [
+            ; check for portal access path
+            set platform-path item passenger-meta-path-index passenger-meta-path
+            if length platform-path = 2 [
+              let platform-path-from item 0 platform-path
+              if [p-is-portal?] of platform-path-from [
+                ; from is portal
+                let platform-path-from-portal one-of [portals-here] of platform-path-from 
+                ask platform-path-from-portal [
+                  let platform-path-to item 1 platform-path
+                  if [p-is-portal?] of platform-path-to [
+                    ; to is portal  
+                    let platform-path-to-portal one-of [portals-here] of platform-path-to
+                    let portals-access access-with platform-path-to-portal
+                    if portals-access != nobody [
+                      ; the meta-path uses the portals
+                      set passenger-move-delay [p-cost] of portals-access 
+                      set passenger-meta-path-index passenger-meta-path-index + 1
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
     ]
   ]
 end
@@ -60,7 +101,7 @@ to collide-passengers
 ;        set force-x d-x
 ;        set force-y d-y
         let force-x item 0 _repel-vector
-        let force-y item 1 _repel-vector
+        let force-y item 1 _repel-vector 
         
         
         set sum-x sum-x + force-x

@@ -19,7 +19,7 @@ globals [
 ; observer
 to setup-run-constants 
   ; PRE RUN
-  set number-passengers 300
+  set number-passengers 1
   
   ; RUN
   set passenger-step 0.3
@@ -45,21 +45,14 @@ end
 
 ; observer
 to setup-run
+  clear-drawing
   init-runnables
   setup-run-constants
   setup-spawning
-  ;  set left-to-spawn number-passengers
-  ;  init-pois
-  ;  init-passengers
   ask links [hide-link]
-;  
-;  foreach [self] of passengers [
-;    pass -> 
-;    reset-walked-paths
-;    ask pass [show-walked-path passenger-path]
-;    user-message ""
-;  ]
+  
   reset-ticks
+
 end
 
 ; observer
@@ -72,15 +65,15 @@ end
 ; observer
 to setup-spawning
   let spawner-patches patches with [not empty? filter [i -> member? i PTS-DESTINY] pts]
-    repeat number-passengers [
-      ask one-of spawner-patches [
-        let sprouted-passenger sprout-passenger
-        ask sprouted-passenger [ 
+  repeat number-passengers [
+    ask one-of spawner-patches [
+      let sprouted-passenger sprout-passenger
+      ask sprouted-passenger [ 
         route-passenger 
         path-passenger
       ]
-      ] 
-    ]
+    ] 
+  ]
 end
 
 
@@ -166,9 +159,13 @@ end
 to path-passenger
   let meta-path p-platform-pathfind source-patch destination-patch
   show meta-path
-  set passenger-path meta-path
-;  show-walked-path meta-path
+  set passenger-meta-path meta-path
+  set passenger-meta-path-index 0
+  set passenger-simple-path-index 0
+  set passenger-move-delay 0
   
+  show-meta-walked-path meta-path ;DEBUG
+  show "leaving path-pasenger"
 end
 
 to init-pois
