@@ -120,9 +120,11 @@ to-report p-platform-pathfind [start-node goal-node]
         ask accessible-portals [
           let portal-access access-with this-portal
           let portal-access-cost [p-cost] of portal-access
+          let portal-access-path (list this-portal self)
           ask one-of meta-pois-here [
             create-pathable-with this-meta-poi [
               set pathable-cost portal-access-cost
+              set pathable-path portal-access-path
               set color [0 255 255]
             ]  
           ]
@@ -132,9 +134,11 @@ to-report p-platform-pathfind [start-node goal-node]
         ask findable-portals [
           let portal-findable findable-with this-portal
           let portal-findable-cost [f-cost] of portal-findable
+          let portal-findable-path [f-path] of portal-findable
           ask one-of meta-pois-here [
             create-pathable-with this-meta-poi [
               set pathable-cost portal-findable-cost
+              set pathable-path portal-findable-path
               set color [0 255 255]
             ]   
           ]
@@ -142,7 +146,7 @@ to-report p-platform-pathfind [start-node goal-node]
       ]
       [
         ask other-meta-pois with [[p-platform] of [patch-here] of self = [p-platform] of this-patch] [
-          let path p-pathfind this-patch [patch-here] of self
+          let path p-pathfind this-patch [patch-here] of self 
           ;          let p-platform-meta-poi one-of [portals-here] of p-platform-neighbor-node
           ;          if p-platform-meta-poi = nobody [
           ;            set p-platform-meta-poi  one-of [meta-pois-here] of p-platform-neighbor-node
@@ -151,6 +155,7 @@ to-report p-platform-pathfind [start-node goal-node]
           let normalized-path-cost distance-path normalized-path
           ;          show (list p-platform-meta-poi p-platform-neighbor-node)
           create-pathable-with this-meta-poi [
+            set pathable-path normalized-path
             set pathable-cost normalized-path-cost
             set color [0 255 255]
           ]
@@ -158,11 +163,11 @@ to-report p-platform-pathfind [start-node goal-node]
       ]
     ]
   ]
-;        ask p-portal-accesses-portals [ 
-;        ]
-;        ask 
-;        ask other meta-pois with [[p-is-portal?] of patch-here] [
-;          let other-portal one-of [portals-here] of patch-here
+  ;        ask p-portal-accesses-portals [ 
+  ;        ]
+  ;        ask 
+  ;        ask other meta-pois with [[p-is-portal?] of patch-here] [
+  ;          let other-portal one-of [portals-here] of patch-here
 ;          ask other-portal [
 ;            show (list "other this" other-portal this-portal)
 ;            let other-access-cost [p-cost] of access-with this-portal
@@ -216,13 +221,37 @@ to-report p-platform-pathfind [start-node goal-node]
 ;      show "found"
 ;      ask goal-node [        show (list "goal-node says" parent g-score)      ] ;debug
       
-      let path backtrace-path start-node goal-node
+      let meta-path backtrace-path start-node goal-node
       
-      report path
+      let composed-path []
+      let meta-path-length length meta-path
+      let meta-path-index 0
+      show (list "mounting found meta-path" )
+      repeat meta-path-length - 1[
+        let from-in-meta-path item meta-path-index meta-path
+        let to-in-meta-path item ( meta-path-index + 1 ) meta-path
+        show  (list "patches" from-in-meta-path "->" to-in-meta-path)
+        let from-meta-poi one-of [meta-pois-here] of from-in-meta-path
+        let to-meta-poi one-of [meta-pois-here] of to-in-meta-path
+        show  (list "meta-pois" from-meta-poi "->" to-meta-poi )
+        ask from-meta-poi [
+          let pathable-from-to pathable-with to-meta-poi
+          let pathable-from-to-path [pathable-path] of pathable-from-to
+          show (list "pathable" pathable-from-to "path" pathable-from-to-path)
+          if first pathable-from-to-path != from-in-meta-path [
+            ; reverse
+            set pathable-from-to-path reverse pathable-from-to-path 
+          ]
+          set composed-path fput pathable-from-to-path composed-path 
+        ]
+        set meta-path-index meta-path-index + 1
+      ]
+      
+      report composed-path
     ]
     
     set open-set (remove current-node open-set)
-;    show (list "open-set" open-set)
+    ;    show (list "open-set" open-set)
     
     
     

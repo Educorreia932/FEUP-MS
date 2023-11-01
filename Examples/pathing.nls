@@ -243,9 +243,16 @@ to show-walked-path [path]
       ]
     ]
   ]
-  
 end
 
+to show-meta-walked-path [meta-path]
+  foreach meta-path [
+    path ->
+    show-walked-path path
+    
+  ]
+  
+end
 ; observer
 to reset-show-paths
   ask debugers [die]
@@ -467,9 +474,3 @@ to-report is-straight-path-pos [start-pos goal-pos]
   ]
   report true
 end
-
-
-
-
-
-

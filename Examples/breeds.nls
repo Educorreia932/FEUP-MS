@@ -9,7 +9,11 @@ breed [platformers platformer]
 breed [debugers debuger]
 breed [meta-pois meta-poi]
 
-passengers-own [source-patch source destination destination-patch spawned passenger-path reached-destination sum-collisions-vector]
+passengers-own [source-patch source destination destination-patch spawned
+  passenger-meta-path passenger-meta-path-index passenger-simple-path-index
+  passenger-move-delay ; Contemplate portal access cost. Check proportionality to normal step cost (due to how meta-pathing works and passenger-step)
+  reached-destination 
+  sum-collisions-vector]
 pois-own [to-spawn to-despawn empty ]
 trains-own [is-a-poi direction-vector]
 train-cells-own [belong-to-train]
@@ -36,6 +40,6 @@ undirected-link-breed [pathables pathable]
 
 findables-own [f1 f2 f-path f-cost f-p-id ]
 accesses-own [a1 a2 p-cost]
-pathables-own [pathable-cost]
+pathables-own [pathable-cost pathable-path]
 
 links-own [link-type]
