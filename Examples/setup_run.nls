@@ -14,6 +14,8 @@ globals [
   collision-epsilon
   
   wall-collision-repel
+  
+  first-end
   ; infered
   true-collision-radius   collision-sigma ; equivalent, just nomenclature
 ]
@@ -21,7 +23,7 @@ globals [
 ; observer
 to setup-run-constants 
   ; PRE RUN
-  set number-passengers 1
+  set number-passengers 100
   
   ; RUN
   set passenger-step 0.3
@@ -36,6 +38,8 @@ to setup-run-constants
   
   
   set wall-collision-repel 0.1
+  
+  set first-end true
   ; inferred
   set true-collision-radius collision-radius + turtle-radius
   set collision-sigma collision-radius + turtle-radius
@@ -49,12 +53,12 @@ end
 
 ; observer
 to setup-run
-  clear-drawing
   init-runnables
   setup-run-constants
   setup-spawning
   ask links [hide-link]
   
+  clear-drawing
   reset-ticks
 
 end
