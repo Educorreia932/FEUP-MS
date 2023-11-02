@@ -151,7 +151,8 @@ to-report p-platform-pathfind [start-node goal-node]
       [
         ask other-meta-pois with [[p-platform] of [patch-here] of self = [p-platform] of this-patch] [
           if pathable-with this-meta-poi = nobody [ ; no need for duplicating calculations
-            let path p-pathfind-better this-patch [patch-here] of self 
+;            let path p-pathfind-better this-patch [patch-here] of self 
+            let path p-pathfind-straightened this-patch [patch-here] of self 
           ;          let p-platform-meta-poi one-of [portals-here] of p-platform-neighbor-node
           ;          if p-platform-meta-poi = nobody [
           ;            set p-platform-meta-poi  one-of [meta-pois-here] of p-platform-neighbor-node

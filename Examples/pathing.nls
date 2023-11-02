@@ -167,7 +167,7 @@ to-report p-pathfind [start-vertex goal-vertex]
   while [length open-set > 0 ] [
     let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
     
-;    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+    ;    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
     
     if current-vertex = goal-vertex [ ; Goal reached
       let path backtrace-path start-vertex goal-vertex
@@ -178,11 +178,16 @@ to-report p-pathfind [start-vertex goal-vertex]
     set closed-set lput current-vertex closed-set
     
     ask current-vertex [
-      let pathable-neighbors neighbors with [
+            let pathable-neighbors neighbors with [
         is-pathable
-      ]
-;      ask pathable-neighbors
-      ask neighbors with [is-pathable] ; BUG for some reason it's not working with the variable?
+        and 
+        is-straight-path-pos (list [pxcor] of current-vertex [pycor] of current-vertex) (list pxcor pycor)]
+      ;      ask pathable-neighbors
+      ask neighbors with [
+        is-pathable
+        and 
+        is-straight-path-pos (list [pxcor] of current-vertex [pycor] of current-vertex) (list pxcor pycor)
+      ]; BUG for some reason it's not working with the variable?
       [
         if not member? self closed-set [
           let tentative-g [g-score] of current-vertex + distance current-vertex
@@ -201,6 +206,60 @@ to-report p-pathfind [start-vertex goal-vertex]
   show (list "couldn't find" start-vertex goal-vertex)
   report []
 end
+
+; observer
+to-report p-pathfind-naive [start-vertex goal-vertex]
+  ask patches with [is-pathable] [
+    set g-score infinity
+    set h-score h-distance goal-vertex
+    set f-score (g-score + h-score)
+    set parent 0
+  ]
+  
+  let open-set (list start-vertex)
+  let closed-set []
+  ask start-vertex [
+    set g-score 0
+    set f-score h-score
+  ]
+  
+  while [length open-set > 0 ] [
+    let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
+    
+    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+    
+    if current-vertex = goal-vertex [ ; Goal reached
+      let path backtrace-path start-vertex goal-vertex
+      report path
+    ]
+    
+    set open-set (remove current-vertex open-set)
+    set closed-set lput current-vertex closed-set
+    
+    ask current-vertex [
+      
+      let pathable-neighbors neighbors with [is-pathable]
+      ;      ask pathable-neighbors
+      ask neighbors with [is-pathable]; BUG for some reason it's not working with the variable?
+      [
+        if not member? self closed-set [
+          let tentative-g [g-score] of current-vertex + distance current-vertex
+          if not member? self open-set or tentative-g < g-score [
+            set g-score tentative-g
+            set f-score h-score + g-score
+            set parent current-vertex
+            if not member? self open-set [
+              set open-set lput self open-set
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+  show (list "couldn't find" start-vertex goal-vertex)
+  report []
+end
+
 
 ; observer
 to show-pathfinding [start-vertex goal-vertex]
@@ -338,7 +397,7 @@ end
 
 ; observer
 to-report p-pathfind-better [start-vertex goal-vertex]
-  ask patches with [is-pathable] [
+    ask patches with [is-pathable] [
     set g-score infinity
     set h-score h-distance goal-vertex
     set f-score (g-score + h-score)
@@ -355,8 +414,8 @@ to-report p-pathfind-better [start-vertex goal-vertex]
   while [length open-set > 0 ] [
 
     let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
-;    show (list "current-vertex" current-vertex "->" [parent] of current-vertex)    
-;    user-message (list "current-vertex" current-vertex "->" [parent] of current-vertex)    
+    ;    show (list "current-vertex" current-vertex "->" [parent] of current-vertex)    
+    ;    user-message (list "current-vertex" current-vertex "->" [parent] of current-vertex)    
 ;    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
     
     if current-vertex = goal-vertex [ ; Goal reached
@@ -378,7 +437,7 @@ to-report p-pathfind-better [start-vertex goal-vertex]
           let tentative-g [g-score] of current-vertex + distance current-vertex
           let current-parent [parent] of current-vertex
           let new-parent current-vertex
-;          show (list "inside" self "neighbor of" current-vertex "->" current-parent)
+          ;          show (list "inside" self "neighbor of" current-vertex "->" current-parent)
 ;          user-message (list "inside" self "neighbor of" current-vertex "->" current-parent)
           if current-parent != 0 [
             if is-straight-path current-parent self [
@@ -386,12 +445,12 @@ to-report p-pathfind-better [start-vertex goal-vertex]
               if new-tentative-g <= tentative-g [
                 set tentative-g new-tentative-g
                 set new-parent current-parent
-;                show (list "found straighter path from" current-parent "to" self "instead of" current-vertex "->" current-parent)
+                ;                show (list "found straighter path from" current-parent "to" self "instead of" current-vertex "->" current-parent)
 ;                user-message (list "found straighter path from" current-parent "to" self "instead of" current-vertex "->" current-parent)
               ]
-            ]
-          ]
-          if not member? self open-set or tentative-g < g-score [
+                          ]
+                    ]
+                   if not member? self open-set or tentative-g < g-score [
             set g-score tentative-g
             set f-score h-score + g-score
             set parent new-parent
@@ -473,4 +532,53 @@ to-report is-straight-path-pos [start-pos goal-pos]
 ;    show (list start-pos "-" cur-pos "->" goal-pos)
   ]
   report true
+end
+
+; observer
+to-report p-pos [p]
+  report (list [pxcor] of p [pycor] of p)
+end
+to-report p-pathfind-straightened [start-vertex goal-vertex]
+  let path p-pathfind start-vertex goal-vertex
+  show (list "straightined path" path)
+  let straightened-path straighten-path path
+  report straightened-path
+end
+
+to-report straighten-path [path]
+  let straightened-path _straighten-path path
+  let second-straightened-path _straighten-path straightened-path
+  while [length second-straightened-path < length straightened-path] [
+   set straightened-path second-straightened-path
+   set second-straightened-path _straighten-path straightened-path 
+  ]
+ 
+  report straightened-path
+end
+
+
+to-report _straighten-path [path]
+  let straight-source-index 0
+  let straight-prev-straight-index 1
+  let straight-destination-index 2
+  
+  let straight-path (list first path)
+  while [straight-destination-index < length path][
+    let straight-source-patch item straight-source-index path
+    let straight-destination-patch item straight-destination-index path
+    
+    ifelse is-straight-path-pos (p-pos straight-source-patch) (p-pos straight-destination-patch) [
+    ]
+    [
+      let last-straight-patch item straight-prev-straight-index path
+      set straight-source-index straight-prev-straight-index
+      set straight-path lput last-straight-patch straight-path
+    ]
+    set straight-prev-straight-index straight-destination-index
+    set straight-destination-index straight-destination-index + 1
+  ]  
+  
+  set straight-path lput last path straight-path
+  
+  report straight-path
 end
