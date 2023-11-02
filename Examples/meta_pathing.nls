@@ -118,6 +118,7 @@ to-report p-platform-pathfind [start-node goal-node]
         let this-portal one-of portals-here
         let accessible-portals p-portal-accesses-portals
         ask accessible-portals [
+          if pathable-with this-meta-poi = nobody [ ; no need for duplicating calculations
           let portal-access access-with this-portal
           let portal-access-cost [p-cost] of portal-access
           let portal-access-path (list ( [patch-here] of this-portal ) ( [patch-here] of self) )
@@ -126,12 +127,14 @@ to-report p-platform-pathfind [start-node goal-node]
               set pathable-cost portal-access-cost
               set pathable-path portal-access-path
               set color [0 255 255]
+              ]  
             ]  
           ]
         ]
         
         let findable-portals p-portal-findables-portals
         ask findable-portals [
+          if pathable-with this-meta-poi = nobody [ ; no need for duplicating calculations
           let portal-findable findable-with this-portal
           let portal-findable-cost [f-cost] of portal-findable
           let portal-findable-path [f-path] of portal-findable
@@ -140,13 +143,15 @@ to-report p-platform-pathfind [start-node goal-node]
               set pathable-cost portal-findable-cost
               set pathable-path portal-findable-path
               set color [0 255 255]
+              ]   
             ]   
           ]
         ]
       ]
       [
         ask other-meta-pois with [[p-platform] of [patch-here] of self = [p-platform] of this-patch] [
-          let path p-pathfind this-patch [patch-here] of self 
+          if pathable-with this-meta-poi = nobody [ ; no need for duplicating calculations
+            let path p-pathfind-better this-patch [patch-here] of self 
           ;          let p-platform-meta-poi one-of [portals-here] of p-platform-neighbor-node
           ;          if p-platform-meta-poi = nobody [
           ;            set p-platform-meta-poi  one-of [meta-pois-here] of p-platform-neighbor-node
@@ -158,6 +163,7 @@ to-report p-platform-pathfind [start-node goal-node]
             set pathable-path normalized-path
             set pathable-cost normalized-path-cost
             set color [0 255 255]
+            ] 
           ]
         ]
       ]
