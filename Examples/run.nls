@@ -161,10 +161,6 @@ to move-passengers
       ; Move
       face next-destination
       fd passenger-step
-      
-      ;TODO prevent bumping against wall if pathing is not proper?
-      
-
     ]
   ]
 end
