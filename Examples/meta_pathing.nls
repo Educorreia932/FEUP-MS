@@ -218,7 +218,7 @@ to-report p-platform-pathfind [start-node goal-node]
             ; reverse
             set pathable-from-to-path reverse pathable-from-to-path 
           ]
-          set composed-path fput pathable-from-to-path composed-path 
+          set composed-path lput pathable-from-to-path composed-path 
         ]
         set meta-path-index meta-path-index + 1
       ]
