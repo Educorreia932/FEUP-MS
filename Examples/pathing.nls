@@ -6,7 +6,6 @@ end
 
 ; observer
 to init-portals-pathfinding 
-  
   ask portals [
     let p-a1 self
     let connected-portals other portals with [
@@ -38,8 +37,9 @@ to init-floors-pathfinding
         let index 0
         foreach left-to-pathfind-to [
           let goal item index left-to-pathfind-to
-          let path pathfind goal
-          let normalized-path normalize-path path
+          let path pathfind-straigthened goal
+          ; let normalized-path normalize-path path
+          let normalized-path path
           let normalized-path-cost distance-path normalized-path
           set poi-paths lput path poi-paths
           create-findable-with goal [
@@ -77,7 +77,7 @@ to init-floors-pathfinding-better
           create-findable-with from-turtle [
             let path []
             ask from-turtle [
-              set path pathfind-better from-turtle
+              set path pathfind-straigthened to-turtle
             ]
             let path-cost distance-path path
             set f1 to-turtle
@@ -138,6 +138,14 @@ to-report pathfind [pathfind-to]
   let start-vertex patch-here
   let goal-vertex [patch-here] of pathfind-to
   report p-pathfind start-vertex goal-vertex
+end
+
+; turtle
+to-report pathfind-straigthened [pathfind-to]
+  ask debugers [die]
+  let start-vertex patch-here
+  let goal-vertex [patch-here] of pathfind-to
+  report p-pathfind-straightened start-vertex goal-vertex
 end
 
 ; turtle
