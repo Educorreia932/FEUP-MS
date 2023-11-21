@@ -251,6 +251,7 @@ end
 to update-passengers-path
   ask moving-passengers [
     ; Update path
+    let this-passenger self
     let platform-path get-next-path
     let next-destination get-next-destination
     ifelse patch-here = next-destination [  
@@ -277,8 +278,17 @@ to update-passengers-path
                   let portals-access access-with platform-path-to-portal
                   if portals-access != nobody [
                     ; the meta-path uses the portals
+                    ask this-passenger [
                     set passenger-move-delay [p-cost] of portals-access 
                     set passenger-meta-path-index passenger-meta-path-index + 1
+                      let px [pxcor] of patch-here
+                      let py [pycor] of patch-here
+                      let d_x xcor - px
+                      let d_y ycor - py
+                      move-to platform-path-to-portal
+                      set xcor xcor + d_x
+                      set ycor ycor + d_y
+                    ]
                   ]
                 ]
               ]
