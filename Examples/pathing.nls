@@ -466,30 +466,6 @@ to-report p-pathfind-better [start-vertex goal-vertex]
   report []
 end
 
-;; observer
-;to-report get-straightened-parent [cur-parent to-straighten]
-;  let pre-parent [parent] of cur-parent
-;  let straightened false
-;  while [not straightened] [
-;    if pre-parent = 0 [
-;      report cur-parent 
-;    ]
-;    ask to-straighten [
-;      if is-straight-path pre-parent to-straighten [
-;        let new-g distance pre-parent
-;        let pre-g [g-score] of cur-parent + distance cur-parent
-;        ifelse new-g <= pre-g [
-;          set pre-parent [parent] of pre-parent
-;        ]
-;        [
-;          set straightened true
-;        ]
-;      ]
-;    ]
-;  ]
-;  report cur-parent
-;end
-
 
 ; observer
 to-report is-straight-path [start-vertex goal-vertex]
@@ -540,7 +516,7 @@ to-report p-pos [p]
 end
 to-report p-pathfind-straightened [start-vertex goal-vertex]
   let path p-pathfind start-vertex goal-vertex
-  show (list "straightined path" path)
+  ;show (list "not straightened path" path)
   let straightened-path straighten-path path
   report straightened-path
 end

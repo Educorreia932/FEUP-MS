@@ -66,7 +66,7 @@ end
 ; observer
 to init-runnables 
   ask train-cells [hide-turtle]
-  ask trains [hide-turtle]
+  ; ask trains [hide-turtle]
   ask passengers [die]
 end
 
@@ -166,14 +166,14 @@ end
 ; passenger
 to path-passenger
   let meta-path p-platform-pathfind source-patch destination-patch
-  show meta-path
+;  show meta-path ;DEBUG
   set passenger-meta-path meta-path
   set passenger-meta-path-index 0
   set passenger-simple-path-index 0
   set passenger-move-delay 0
   
-  show-meta-walked-path meta-path ;DEBUG
-  show "leaving path-pasenger META PATH IS BAD"
+;  show-meta-walked-path meta-path ;DEBUG
+;  show "leaving path-pasenger META PATH IS BAD"
 end
 
 to init-pois
@@ -238,7 +238,7 @@ to spawn-passengers
 
   ask pois [
     ; TODO
-    show list "passengers here:" passengers-here
+;    show list "passengers here:" passengers-here
     ifelse any? passengers-here with [spawned = true] [
       print list "self" self
 
