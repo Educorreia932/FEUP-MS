@@ -17,19 +17,139 @@ to go
 end
 
 to setup-tests
-  reset-ticks
+  init-runnables
   setup-run-constants 
-  set turtle-size 1
-  set turtle-shape "circle"
-  set turtle-radius 1
+  ;  set turtle-size 1
+  ;  set turtle-shape "circle"
+  ;  set turtle-radius 1
+  ask links [hide-link]
   
-  ask passengers[die]
+  clear-drawing
+  reset-ticks
 end
 
 to add-to-test
   ask patch 12 14 [let _ sprout-passenger]
 end
 
+to add-to-test-2
+  ask patch 18 19 [
+    let p self
+    let random-x random-float 0.98 - 0.49 ; prevent passing to another patch due to roundings
+    let random-y random-float 1 - 0.5
+    let pass-x pxcor + random-x
+    let pass-y pycor + random-y
+    let pass-pos list pass-x pass-y
+    
+    sprout-passengers 1 [
+      set size 0.05
+      set shape turtle-shape
+      set color [100 255 255]
+      setxy pass-x pass-y
+      show (list "spawned at" xcor ycor)
+      set reached-destination false
+      
+    ]
+    
+  ]
+end
+
+to add-to-test-3
+  let spawner-patches patches with [not empty? filter [i -> member? i PTS-DESTINY] pts]
+  
+  ask one-of spawner-patches [
+    let sprouted-passenger sprout-passenger
+    ask sprouted-passenger [ 
+      route-passenger 
+      path-passenger
+      
+    ] 
+  ]
+  
+end
+
+to add-to-test-instance-3-1
+  add-to-test-instance-3 11.427096876777567 1.6919347185794718 patch 24 21
+end
+
+to add-to-test-instance-3-2
+  add-to-test-instance-3 15 1 patch 4 14
+end
+
+to add-to-test-instance-3-3
+  add-to-real-test-instance 9 28 patch 12 3
+end 
+
+to add-to-test-instance-3-4
+  add-to-real-test-instance 52 4 patch 43 29
+end 
+
+to add-to-real-test-instance [x y pp]
+  ask patch x y [
+    let sprouted-passenger sprout-passenger
+    ask sprouted-passenger [
+      let destination-train 0
+      ask pp[
+        let train-index position PT-TRAIN pts
+        let train_id item train-index pts-ids
+        set destination-train one-of trains with [tt-id = train_id and tt = TT-POI]
+      ]
+      show ( list "destination" destination-train )
+      set destination destination-train
+      set destination-patch pp
+      path-passenger
+    ]
+  ]
+  
+  
+end
+
+to add-to-test-instance-3 [x y pp]
+  
+  ask patch x y [
+    let sprouted-passenger 0
+    let p self
+    
+    sprout-passengers 1 [
+      set size turtle-size
+      set shape turtle-shape
+      set color [100 255 255]
+      setxy x y
+      
+      set spawned true
+      set reached-destination false
+      set source-patch p
+      set source [p-destination] of p
+      
+      set sprouted-passenger self
+      
+      let pass-source source
+      let all-train-destinations trains
+      let all-destinations ( turtle-set  all-train-destinations)
+      let other-destinations all-destinations with [
+        self != pass-source
+      ]
+      
+      let chosen-destination one-of other-destinations
+      
+      set destination [belong-to-train] of [train-cells-here] of pp
+      set destination-patch pp
+      
+      let meta-path p-platform-pathfind source-patch destination-patch
+      show meta-path
+      set passenger-meta-path meta-path
+      set passenger-meta-path-index 0
+      set passenger-simple-path-index 0
+      set passenger-move-delay 0
+      
+      show-meta-walked-path meta-path ;DEBUG
+      show "leaving path-pasenger META PATH IS BAD"
+    ]  
+  ]  
+end
+
+
+; observer
 to move-passengers
   ask moving-passengers [    
     let next-destination get-next-destination
