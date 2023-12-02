@@ -4,8 +4,6 @@ globals [
   ;PRE RUN
   number-passengers left-to-spawn
   
-  number-pois
-  
   
   ; RUN
   passenger-step collision-calculations-per-tick
@@ -176,95 +174,4 @@ to path-passenger
 ;  show "leaving path-pasenger META PATH IS BAD"
 end
 
-to init-pois
-  let poi-index 0
-  repeat number-pois [
-    print poi-index
-    let side poi-index mod 2
-    create-a-poi-in-side side
-    set poi-index poi-index + 1
-  ]
-end
 
-to create-a-poi-in-side [side]
-  let x min-pxcor ; default left side
-  if side = 1
-  [
-    set x max-pxcor
-  ]
-  create-a-poi x random-ycor
-end
-to create-a-poi [x y]
-  create-pois 1 [
-    set empty true
-    set to-spawn []
-    set to-despawn []
-    setxy x y
-    set shape "square"
-    set color red
-  ]
-end
-
-to init-passengers
-
-  repeat number-passengers [
-    let to-be-source one-of pois
-    let to-be-destination one-of pois with [self != to-be-source]
-
-    create-passengers 1 [
-      set source to-be-source
-      set destination to-be-destination
-      set spawned false
-      set color pink
-      setxy [xcor] of source  [ycor] of source
-    ]
-
-  ]
-  ask pois [
-    set to-spawn passengers with [source = myself]
-    set to-despawn passengers with [destination = myself]
-  ]
-end
-
-
-to spawn-passenger
-  set spawned true
-end
-
-to spawn-passengers
-  if left-to-spawn = 0 [
-    stop
-  ]
-
-  ask pois [
-    ; TODO
-;    show list "passengers here:" passengers-here
-    ifelse any? passengers-here with [spawned = true] [
-      print list "self" self
-
-    ]
-    [
-      if any? to-spawn with [spawned = false][
-        print list "to be spanwed" passengers-here with [spawned = false]
-        ask one-of to-spawn [
-          spawn-passenger
-        ]
-        print "exiting pois"
-      ]
-    ]
-
-  ]
-  ;let passengers-to-spawn passengers with [spawned = false]
-  ;print list "length" count passengers-to-spawn
-  ;ask passengers-to-spawn [
-  ;  ask source [
-  ;   ifelse empty [
-  ;       show "is empty"
-  ;       set empty false
-  ;     ]
-  ;     [
-  ;       show "is full"
-  ;    ]
-  ;  ]
-  ; ]
-end

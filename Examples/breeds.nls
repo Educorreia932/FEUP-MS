@@ -1,6 +1,5 @@
 ;; breeds
 breed [passengers passenger]
-breed [pois poi]
 breed [trains train]
 breed [train-cells train-cell]
 breed [portals portal]
@@ -14,7 +13,6 @@ passengers-own [source-patch source destination destination-patch spawned
   passenger-move-delay ; Contemplate portal access cost. Check proportionality to normal step cost (due to how meta-pathing works and passenger-step)
   reached-destination 
   sum-collisions-vector]
-pois-own [to-spawn to-despawn empty ]
 trains-own [is-a-poi direction-vector]
 train-cells-own [belong-to-train]
 portals-own [portal-id portal-connect-ids]
