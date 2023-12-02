@@ -1,13 +1,16 @@
 extensions [bitmap]
 
 globals [
-  ; config constants
+  ; CONFIG CONSTANTS
   FILE
   FLOORS
 
   ; infered config constants
   floor-width floor-height
   PLATFORMS
+
+  ; PROGRAMMNG CONSTANTS
+  TIME-MONTHS TIME-PM-STR
 
   ; CONSTANTS
   ; trains
@@ -29,6 +32,7 @@ globals [
 
   ;pathing
   pathing INFINITY
+  
 ]
 
 
@@ -37,6 +41,11 @@ to setup-configs
   set FILE "4_platforms_3_floors_station.png"
   ; set FILE "turtle_pathfinding_2.png"
   set FLOORS 3
+end
+
+to setup-programming-constants
+  set TIME-MONTHS (list "jan" "fev" "mar" "abr" "mai" "jun" "jul" "ago" "set" "out" "nov" "dez")
+  set TIME-PM-STR "da tarde"
 end
 
 
@@ -89,6 +98,7 @@ end
 
 to setup-static
   setup-configs
+  setup-programming-constants
   setup-constants
   load
 end
