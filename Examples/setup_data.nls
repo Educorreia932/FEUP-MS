@@ -1,0 +1,455 @@
+
+to init-basics
+  ask patches [
+    set pts []
+    set pts-ids []
+    set number-pt 0
+  ]
+
+  ct
+  ask turtles [die]
+
+  clear-links
+end
+
+; patch
+to-report p-index
+  report pxcor * world-height + pycor
+end
+
+to init-floors
+  let floor-index 0
+  let height-index 0
+  let width-index 0
+  let floor-x-index 0
+  let floor-y-index 0
+  repeat FLOORS [
+    set height-index 1
+    set floor-y-index 0
+    repeat floor-height [
+      set width-index 1 + (1 + floor-width) * floor-index
+      set floor-x-index 0
+      repeat floor-width [
+        ask patch width-index height-index [
+          set pfloor-id floor-index
+          set pfloor-x floor-x-index
+          set pfloor-y floor-y-index
+        ]
+        set width-index width-index + 1
+        set floor-x-index floor-x-index + 1
+      ]
+      set height-index height-index + 1
+      set floor-y-index floor-y-index + 1
+    ]
+    set floor-index floor-index + 1
+
+  ]
+end
+
+to init-platforms
+  let platform-id 0
+  let non-instantiated-platform min-one-of patches with [member? pcolor PCS-PLATFORM and not member? PT-PLATFORM pts] [p-index]
+  while [non-instantiated-platform != nobody][
+    ask non-instantiated-platform [
+      set pts lput PT-PLATFORM pts
+      set pts-ids lput platform-id pts-ids
+      flood-multizone PT-PLATFORM platform-id PCS-PLATFORM
+    ]
+
+    let platform-patches patches with [member? PT-PLATFORM PTS and p-platform = platform-id]
+    let centroid get-centroid platform-patches
+    ask centroid [
+      sprout-platformers 1 [
+        set p-p-id platform-id
+        set color [ 0 255 0 ]
+      ]
+
+    ]
+
+    set non-instantiated-platform min-one-of patches with [member? pcolor PCS-PLATFORM and not member? PT-PLATFORM pts][p-index]
+    set platform-id platform-id + 1
+  ]
+  set PLATFORMS platform-id + 1
+end
+
+to init-grounds
+  ask patches with [pcolor = COLOR-GROUND][
+    set pts lput PT-GROUND PTS
+    set pts-ids lput 0 pts-ids
+  ]
+end
+
+; patch
+to-report p-platform
+  let platform-index position PT-PLATFORM pts
+  let platform-id item platform-index pts-ids
+  report platform-id
+end
+
+; turtle
+to-report t-platform
+  report [p-platform] of patch-here
+end
+
+; patch
+to-report is-portal
+  report not empty? filter [i -> member? i PTS-PORTAL] pts
+end
+
+;turtle
+to-report is-elevator
+  report tt = PT-ELEVATOR
+end
+
+; patch
+to-report p-portal-id
+  let portal-pts filter [i -> member? i PTS-PORTAL] pts
+  let portal-pt first portal-pts
+  let portal-index position portal-pt pts
+  let portal-id-to-report item portal-index pts-ids
+  report portal-id-to-report
+end
+
+to-report sprout-portal
+  let sprouted-portal 0
+  sprout-portals 1 [
+    ; portal
+    set portal-id p-portal-id
+    set portal-connect-ids []
+
+    ; turtle
+    set tfloor-id pfloor-id
+    set tfloor-x pfloor-x
+    set tfloor-y pfloor-y
+    ifelse member? PT-STAIR pts [
+      set tt TT-STAIR
+    ]
+    [
+      set tt TT-ELEVATOR
+    ]
+
+    set tt-id p-portal-id
+    set poi-paths []
+    set init-poi-paths false
+    set shape "arrow"
+
+
+    set sprouted-portal self
+  ]
+  report sprouted-portal
+end
+
+; patch
+to-report sprout-portal-cell
+  let sprouted-portal-cell 0
+  let pportal-index p-portal-id
+  sprout-portal-cells 1 [
+    ; portal
+    set portal-id pportal-index
+    set belong-to-portal min-one-of portals with [portal-id = p-portal-id][[p-index] of patch-here]
+
+    ; turtle
+    set color [80 0 80]
+    set tfloor-id pfloor-id
+    set tfloor-x pfloor-x
+    set tfloor-y pfloor-y
+    set poi-paths []
+    set init-poi-paths false
+    set shape "star"
+    set sprouted-portal-cell self
+  ]
+  report sprouted-portal-cell
+end
+
+; observer
+to-report get-centroid [patches-set]
+
+ let x-sum 0
+ let y-sum 0
+
+  ask patches-set [
+    set x-sum x-sum + pxcor
+    set y-sum y-sum + pycor
+  ]
+
+  let num-patches count patches-set
+  let centroid-x x-sum / num-patches
+  let centroid-y y-sum / num-patches
+  let centroid min-one-of patches-set [distance patch centroid-x centroid-y]
+  report centroid
+end
+
+; observer
+to init-portal [portal-id-to-init]
+
+  let portal-patches patches with [
+    not empty? filter [i -> member? i PTS-PORTAL] pts
+    and
+    p-portal-id = portal-id-to-init
+  ]
+  let centroid-portal get-centroid portal-patches
+
+  ask centroid-portal [
+    let main-portal sprout-portal
+    ask portal-patches [
+      let _ sprout-portal-cell
+    ]
+  ]
+
+end
+
+; observer
+to init-portals
+  let pportal-id 0
+  let remaining-portals true
+  while [remaining-portals] [
+    let non-instantiated-portals patches with[
+      member? pcolor PCS-PORTAL
+      and
+      empty? filter [i -> member? i PTS-PORTAL] pts
+    ]
+    ifelse any? non-instantiated-portals [
+      let non-instantiated-portal min-one-of non-instantiated-portals [p-index]
+      ask non-instantiated-portal [
+        let portal-color 0
+        let portal-pt 0
+        ifelse pcolor = COLOR-STAIR [
+          set portal-color COLOR-STAIR
+          set portal-pt PT-STAIR
+        ]
+        [
+          set portal-color COLOR-ELEVATOR
+          set portal-pt PT-ELEVATOR
+        ]
+        set pts lput portal-pt pts
+        set pts-ids lput pportal-id pts-ids
+        flood-zone portal-pt pportal-id portal-color
+      ]
+      init-portal pportal-id
+      set pportal-id pportal-id + 1
+    ]
+    [
+      set remaining-portals false
+    ]
+  ]
+
+
+end
+
+; observer
+to init-lines
+  let train-line-id 0
+  let non-instantiated-train-line min-one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts][p-index]
+  while [non-instantiated-train-line != nobody] [
+    ask non-instantiated-train-line [
+      set pts lput PT-TRAIN-LINE pts
+      set pts-ids lput train-line-id pts-ids
+      flood-zone PT-TRAIN-LINE train-line-id COLOR-TRAIN-LINE
+      init-rail
+    ]
+    set non-instantiated-train-line min-one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts ][p-index]
+    set train-line-id train-line-id + 1
+  ]
+end
+
+; patch
+to flood-multizone [flood-pt flood-pt-id flood-list-colors]
+  let to-flood []
+  set to-flood fput self to-flood
+  while [length to-flood > 0] [
+    let patch-to-flood first to-flood
+    set to-flood remove-item 0 to-flood
+    ask patch-to-flood [
+      set number-pt number-pt + 1
+      let new-to-flood other neighbors4 with [member? pcolor flood-list-colors and not member? flood-pt pts]
+      ask new-to-flood [
+        set pts lput flood-pt pts
+        set pts-ids lput flood-pt-id pts-ids
+        set to-flood fput self to-flood
+      ]
+    ]
+  ]
+end
+
+; patch
+to flood-zone [flood-pt flood-pt-id flood-color]
+  let to-flood []
+  set to-flood fput self to-flood
+  while [length to-flood > 0] [
+    let patch-to-flood first to-flood
+    set to-flood remove-item 0 to-flood
+    ask patch-to-flood [
+      set number-pt number-pt + 1
+      let new-to-flood other neighbors4 with [pcolor = flood-color and not member? flood-pt pts]
+      ask new-to-flood [
+        set pts lput flood-pt pts
+        set pts-ids lput flood-pt-id pts-ids
+        set to-flood fput self to-flood
+      ]
+    ]
+  ]
+end
+
+to-report get-last [a-patch patch-pt direction]
+  let vec_x item 0 direction
+  let vec_y item 1 direction
+  let x 0
+  let y 0
+
+
+  let checking-ground patch-at x y
+  while [is-patch? checking-ground and (member? patch-pt [pts] of checking-ground)] [
+    set x x + vec_x
+    set y y + vec_y
+    set checking-ground patch-at x y
+
+  ]
+
+  set x x - vec_x
+  set y y - vec_y
+  set checking-ground patch-at x y
+  report checking-ground
+end
+
+to-report get-last-before-ground [a-patch patch-pt direction]
+  let vec_x item 0 direction
+  let vec_y item 1 direction
+  let x 0
+  let y 0
+
+
+  let checking-ground patch-at x y
+  while [is-patch? checking-ground and member? patch-pt [pts] of checking-ground] [
+    set x x + vec_x
+    set y y + vec_y
+    set checking-ground patch-at x y
+
+  ]
+
+  if is-patch? checking-ground [
+    if [pcolor] of checking-ground = COLOR-GROUND [
+      set x x - vec_x
+      set y y - vec_y
+      set checking-ground patch-at x y
+      report checking-ground
+
+    ]
+  ]
+  report nobody
+end
+
+to init-rail
+  let directions [[0 1] [0 -1] [1 0] [-1 0]]
+  foreach directions [
+    let direction first directions
+    set directions remove-item 0 directions
+    let checking-ground get-last-before-ground self PT-TRAIN-LINE direction
+    if checking-ground != nobody[
+      ask checking-ground [
+        let carriage-direction-vector rotate-vector-clock direction
+        let carriage-head get-last checking-ground PT-TRAIN-LINE carriage-direction-vector
+        ask carriage-head [
+          init-train carriage-direction-vector
+        ]
+      ]
+      stop
+    ]
+  ]
+
+end
+
+;patch
+to-report is-train-line-pt?
+  report member? PT-TRAIN-LINE pts
+end
+
+; patch
+to-report p-train-line
+  let train-line-index position PT-TRAIN-LINE pts
+  let  train-line-id item  train-line-index pts-ids
+  report train-line-id
+end
+
+; patch
+to-report sprout-train [heading-vector]
+  let sprouted-train ""
+  let train-id p-train-line
+  sprout-trains 1 [
+    ; train
+    set direction-vector heading-vector
+    set is-a-poi true
+
+    ; turtle
+    set color [133 133 133]
+    facexy xcor + item 0 heading-vector ycor + item 1 heading-vector
+    set tfloor-id pfloor-id
+    set tfloor-x pfloor-x
+    set tfloor-y pfloor-y
+    set tt TT-POI
+    set tt-id train-id
+    set poi-paths []
+    set init-poi-paths false
+    set sprouted-train self
+  ]
+  report sprouted-train
+end
+
+to init-train [heading-vector]
+  let inited-train sprout-train heading-vector
+
+  let train-id [p-train-line] of [patch-here] of inited-train
+  let heading_x item 0 heading-vector
+  let heading_y item 1 heading-vector
+  let outward-vector rotate-vector-clock heading-vector
+  let outward_x item 0 outward-vector
+  let outward_y item 1 outward-vector
+  let inward-vector symmetric-vector outward-vector
+  let length-index 0
+  let height-index 0
+  let width-index 0
+  let x 0
+  let y 0
+  while [length-index < train-length] [
+    set height-index 0
+    while [height-index < train-height][
+      set width-index 0
+      while [width-index < train-width] [
+        let train-patch patch-at x y
+        ask train-patch [
+          if is-train-line-pt? [
+            sprout-train-cells 1 [
+              set color red
+              set shape "circle"
+              set belong-to-train inited-train
+            ]
+            set pts lput PT-TRAIN pts
+            set pts-ids lput train-id pts-ids
+          ]
+        ]
+        set x x + outward_x
+        set y y + outward_y
+        set width-index width-index + 1
+      ]
+      set x x - width-index * outward_x
+      set y y - width-index * outward_y
+
+      set x x - heading_x
+      set y y - heading_y
+      set height-index height-index + 1
+    ]
+    set x x - heading_x * train-gap
+    set y y - heading_y * train-gap
+    set length-index length-index + 1
+  ]
+end
+
+
+to setup-data
+  init-basics
+  init-floors
+  init-platforms
+  init-grounds
+  init-portals
+  init-lines
+  init-path-finding
+end
