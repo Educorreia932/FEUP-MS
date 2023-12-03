@@ -2,7 +2,7 @@ Experiment file \<date>.txt
 \<pos> is either [\<xcor> \<ycor>] or [\<pxcor> \<pyxcor>]
 
 ```
-[<number of floors> <number of platforms> <number of passengers> <number of trains> <number of portals>]
+[<number of floors> <floor-width> <floor-height> <number of platforms> <number of passengers> <number of trains> <number of portals>]
 []
 []
 ```
@@ -13,7 +13,7 @@ p-init-data:
 ```  
 p-tick-data:  
 ```
-[ [<turtle pos>] heading [<passengers in radius for each radii in LOG-CROWDNESS-RADII]]
+[ [<turtle pos> <optional: turtle pos after portal>] heading [<passengers in radius for each radii in LOG-CROWDNESS-RADII]]
 ```  
 p-end-data: 
 ```

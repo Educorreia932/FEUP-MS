@@ -194,6 +194,6 @@ to log-setup-run
       set p-init-data data
     ]
     
-    set init-data (list FLOORS platforms count passengers count trains count portals)
+    set init-data (list FLOORS floor-height floor-width platforms count passengers count trains count portals)
   ]
 end

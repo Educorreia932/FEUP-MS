@@ -301,10 +301,11 @@ to update-passengers-path
                       set xcor xcor + d_x
                       set ycor ycor + d_y
                       
+                      ; log portal transition
                       let this-tick-data last p-tick-data
                       let tick-data-length length p-tick-data
                       let this-tick-data-pos first this-tick-data
-                      set this-tick-data-pos lput this-tick-data-pos (list xcor ycor)
+                      set this-tick-data-pos lput (list xcor ycor) this-tick-data-pos
                       set this-tick-data replace-item 0 this-tick-data this-tick-data-pos
                       set p-tick-data replace-item  ( tick-data-length - 1 ) p-tick-data this-tick-data
                     ]
