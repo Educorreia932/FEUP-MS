@@ -14,10 +14,21 @@ to init-portals-pathfinding
       tfloor-y =  [tfloor-y] of myself
     ]
     ask connected-portals [
+      let portal-cost 0
+      if is-elevator [
+        let p-a1-floor [tfloor-id] of p-a1
+        let p-a2-floor [tfloor-id] of self
+        let floor-difference abs (p-a1-floor - p-a2-floor)
+        set portal-cost floor-difference * elevator-cost-multiplier
+        show (list "is elevator" p-a1-floor p-a2-floor floor-difference portal-cost)
+      ]
+      
       create-access-with p-a1 [
         set a1 p-a1
         set a2 myself
-        set p-cost 0 
+        
+        
+        set p-cost portal-cost
         set color red 
       ] 
     ]

@@ -93,8 +93,20 @@ to-report t-platform
 end
 
 ; patch
+to-report is-portal 
+  report not empty? filter [i -> member? i PTS-PORTAL] pts
+end
+
+;turtle
+to-report is-elevator
+  report tt = PT-ELEVATOR
+end
+
+; patch
 to-report p-portal-id
-  let portal-index position PT-PORTAL pts
+  let portal-pts filter [i -> member? i PTS-PORTAL] pts
+  let portal-pt first portal-pts
+  let portal-index position portal-pt pts
   let portal-id-to-report item portal-index pts-ids
   report portal-id-to-report
 end
@@ -110,7 +122,13 @@ to-report sprout-portal
     set tfloor-id pfloor-id
     set tfloor-x pfloor-x
     set tfloor-y pfloor-y
-    set tt TT-PORTAL
+    ifelse member? PT-STAIR pts [
+      set tt TT-STAIR
+    ]
+    [
+      set tt TT-ELEVATOR
+    ]
+
     set tt-id p-portal-id
     set poi-paths []
     set init-poi-paths false
@@ -164,7 +182,12 @@ end
 
 ; observer
 to init-portal [portal-id-to-init]
-  let portal-patches patches with [member? PT-PORTAL pts and p-portal-id = portal-id-to-init]
+
+  let portal-patches patches with [
+    not empty? filter [i -> member? i PTS-PORTAL] pts
+    and
+    p-portal-id = portal-id-to-init
+  ]
   let centroid-portal get-centroid portal-patches
 
   ask centroid-portal [
@@ -179,17 +202,39 @@ end
 ; observer
 to init-portals
   let pportal-id 0
-  let non-instantiated-portal min-one-of patches with [pcolor = COLOR-PORTAL and not member? PT-PORTAL pts][p-index]
-  while [non-instantiated-portal != nobody] [
+  let remaining-portals true
+  while [remaining-portals] [
+    let non-instantiated-portals patches with[
+      member? pcolor PCS-PORTAL
+      and
+      empty? filter [i -> member? i PTS-PORTAL] pts
+    ]
+    ifelse any? non-instantiated-portals [
+      let non-instantiated-portal min-one-of non-instantiated-portals [p-index]
     ask non-instantiated-portal [
-      set pts lput PT-PORTAL pts
+        let portal-color 0
+        let portal-pt 0
+        ifelse pcolor = COLOR-STAIR [
+          set portal-color COLOR-STAIR
+          set portal-pt PT-STAIR
+        ]
+        [
+          set portal-color COLOR-ELEVATOR
+          set portal-pt PT-ELEVATOR
+        ]
+        set pts lput portal-pt pts
       set pts-ids lput pportal-id pts-ids
-      flood-zone PT-PORTAL pportal-id COLOR-PORTAL
+        flood-zone portal-pt pportal-id portal-color
     ]
     init-portal pportal-id
-    set  non-instantiated-portal min-one-of patches with [pcolor = COLOR-PORTAL and not member? PT-PORTAL pts][p-index]
     set pportal-id pportal-id + 1
   ]
+    [   
+      set remaining-portals false
+    ]
+  ]
+  
+  
 end
 
 ; observer

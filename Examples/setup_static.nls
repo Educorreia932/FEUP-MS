@@ -16,19 +16,20 @@ globals [
   ; CONSTANTS
   ; trains
   train-width train-height train-gap train-length
+  elevator-cost-multiplier
   
   ; turtle
   turtle-radius 
   turtle-size turtle-shape ;visualization only
 
   ;patch colors
-  COLOR-TRAIN-LINE COLOR-GROUND COLOR-WALL COLOR-BOUNDARY COLOR-PORTAL
-  PCS-PLATFORM
+  COLOR-TRAIN-LINE COLOR-GROUND COLOR-WALL COLOR-BOUNDARY COLOR-STAIR COLOR-ELEVATOR
+  PCS-PLATFORM PCS-PORTAL
   ;patch type pt
-  PT-TRAIN-LINE PT-TRAIN PT-PLATFORM PT-GROUND PT-WALL PT-BOUNDARY PT-PORTAL
-  PTS-PATHABLE PTS-DESTINY
+  PT-TRAIN-LINE PT-TRAIN PT-PLATFORM PT-GROUND PT-WALL PT-BOUNDARY PT-STAIR PT-ELEVATOR
+  PTS-PATHABLE PTS-DESTINY PTS-PORTAL
   ;turtle type tt
-  TT-POI TT-PORTAL
+  TT-POI TTS-PORTAL TT-STAIR TT-ELEVATOR
   TTS-PATHABLE
 
   ;pathing
@@ -43,6 +44,7 @@ globals [
 to setup-configs
   set FILE "assets/small_station.png"
   set FILE "assets/4_platforms_3_floors_station.png"
+  set FILE "assets/4_platforms_3_floors_station_elevators.png"
   ; set FILE "assets/turtle_pathfinding_2.png"
   set FLOORS 3
   set LOG-DATA true
@@ -65,6 +67,7 @@ to setup-constants
   set turtle-radius 0.3
   set turtle-shape "person"
   set turtle-size 0.5
+  set elevator-cost-multiplier 4
   
   set LOG-CROWDNESS-RADII [] ; In setup_run
   
@@ -74,24 +77,30 @@ to setup-constants
   set COLOR-GROUND [255 255 255]
   set COLOR-WALL [0 0 0]
   set COLOR-BOUNDARY [245 0 255]
-  set COLOR-PORTAL [255 255 0]
+  set COLOR-STAIR [255 255 0]
+  set COLOR-ELEVATOR [255 159 0]
 
-  set PCS-PLATFORM (list COLOR-GROUND COLOR-PORTAL COLOR-TRAIN-LINE)
+  set PCS-PLATFORM (list COLOR-GROUND COLOR-TRAIN-LINE COLOR-STAIR COLOR-ELEVATOR)
+  set PCS-PORTAL (list COLOR-STAIR COLOR-ELEVATOR)
 
   set PT-TRAIN-LINE "TRAIN_LINE"
   set PT-TRAIN "TRAIN"
   set PT-PLATFORM "PLATFORM"
   set PT-WALL "WALL"
   set PT-BOUNDARY "BOUNDARY"
-  set PT-PORTAL "PORTAL"
+  set PT-STAIR "STAIR"
+  set PT-ELEVATOR "ELEVATOR"
 
-  set PTS-PATHABLE (list PT-GROUND PT-TRAIN PT-PORTAL)
+  set PTS-PATHABLE (list PT-GROUND PT-TRAIN PT-STAIR PT-ELEVATOR)
   set PTS-DESTINY (list PT-TRAIN)
+  set PTS-PORTAL (list PT-STAIR PT-ELEVATOR)
 
   set TT-POI "POI"
-  set TT-PORTAL "PORTAL"
+  set TT-STAIR "STAIR"
+  set TT-ELEVATOR "ELEVATOR"
 
-  set TTS-PATHABLE (list "POI" "PORTAL")
+  set TTS-PATHABLE (list TT-POI TT-STAIR TT-ELEVATOR)
+  set TTS-PORTAL (list TT-STAIR TT-ELEVATOR)
 
   set INFINITY 999999
   
