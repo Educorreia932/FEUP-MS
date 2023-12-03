@@ -74,9 +74,34 @@ end
 
 to init-grounds
   ask patches with [pcolor = COLOR-GROUND][
-    set pts lput PT-GROUND PTS
-    set pts-ids lput 0 pts-ids
+    set pts lput PT-GROUND pts
+    set pts-ids lput -1 pts-ids
   ]
+  ask patches with [pcolor = COLOR-UPWARDS-ESCALATOR-ENTRY] [
+    set pts lput PT-UP-ESC-ENTRY pts
+    set pts-ids lput -1 pts-ids
+  ]
+  ask patches with [pcolor = COLOR-UPWARDS-ESCALATOR] [
+    set pts lput PT-UP-ESC pts
+    set pts-ids lput -1 pts-ids
+  ]
+  ask patches with [pcolor = COLOR-UPWARDS-ESCALATOR-EXIT] [
+    set pts lput PT-UP-ESC-EXIT pts
+    set pts-ids lput -1 pts-ids
+  ]
+  ask patches with [pcolor = COLOR-DOWNWARDS-ESCALATOR-ENTRY] [
+    set pts lput PT-DOWN-ESC-ENTRY pts
+    set pts-ids lput -1 pts-ids
+  ]
+  ask patches with [pcolor = COLOR-DOWNWARDS-ESCALATOR] [
+    set pts lput PT-DOWN-ESC pts
+    set pts-ids lput -1 pts-ids
+  ]
+  ask patches with [pcolor = COLOR-DOWNWARDS-ESCALATOR-EXIT] [
+    set pts lput PT-DOWN-ESC-EXIT pts
+    set pts-ids lput -1 pts-ids
+  ]
+  
 end
 
 ; patch
