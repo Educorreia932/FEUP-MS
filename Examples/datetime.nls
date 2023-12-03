@@ -2,7 +2,7 @@ extensions [time]
 
 to-report format-io-date [_date-and-time]
   let t-datetime get-datetime _date-and-time
-  let formated_time time:show t-datetime "yyyy_MM_dd_HH_MM_ss"
+  let formated_time time:show t-datetime "yyyy_MM_dd_HH_mm_ss"
   report formated_time
 end
 
