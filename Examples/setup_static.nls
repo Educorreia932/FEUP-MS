@@ -41,9 +41,9 @@ globals [
 
 
 to setup-configs
-  set FILE "small_station.png"
-  set FILE "4_platforms_3_floors_station.png"
-  ; set FILE "turtle_pathfinding_2.png"
+  set FILE "assets/small_station.png"
+  set FILE "assets/4_platforms_3_floors_station.png"
+  ; set FILE "assets/turtle_pathfinding_2.png"
   set FLOORS 3
   set LOG-DATA true
   set LOG-FOLDER "experiments/"
