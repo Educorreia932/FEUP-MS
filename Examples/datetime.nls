@@ -29,8 +29,6 @@ to-report date-and-time-get-date [_date-and-time]
   let day substring _date-and-time ( _length - 12) ( _length - 12 + 2)
   let month_string substring date-and-time ( _length - 9) (_length - 9 + 3)
   
-  show month_string
-  show TIME-MONTHS
   let month_index position month_string TIME-MONTHS
   if month_index = false [
     error (word "Could not parse month in date-and-time string. Month:" month_string)
