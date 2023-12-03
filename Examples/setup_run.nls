@@ -21,7 +21,7 @@ globals [
 ; observer
 to setup-run-constants 
   ; PRE RUN
-  set number-passengers 100
+  set number-passengers 20
   
   ; RUN
   set passenger-step 0.3
@@ -47,6 +47,9 @@ to setup-run-constants
   ]
   
   
+  set LOG-CROWDNESS-RADII [ 0.8 1 1.2 1.4 ]
+  
+  
 end
 
 ; observer
@@ -55,6 +58,8 @@ to setup-run
   setup-run-constants
   setup-spawning
   ask links [hide-link]
+  
+  log-setup-run
   
   clear-drawing
   reset-ticks
@@ -107,6 +112,10 @@ to-report sprout-passenger
         set reached-destination false
         set source-patch p
         set source [p-destination] of p
+        
+        set p-init-data []
+        set p-tick-data []
+        set p-end-data []
         
         set sprouted-passenger self
       ]  
@@ -171,7 +180,20 @@ to path-passenger
   set passenger-move-delay 0
   
 ;  show-meta-walked-path meta-path ;DEBUG
-;  show "leaving path-pasenger META PATH IS BAD"
+  ;  show "leaving path-pasenger META PATH IS BAD"
 end
 
-
+to log-setup-run
+  if LOG-DATA [
+    ask passengers[
+      let pos (list xcor ycor)
+      let source-pos (list [pxcor] of [patch-here] of source [pycor] of [patch-here] of source)
+      let destination-patch-pos (list [pxcor] of destination-patch [pycor] of destination-patch)
+      let destination-pos (list [pxcor] of [patch-here] of destination [pycor] of [patch-here] of destination)
+      let data (list pos source source-pos destination destination-pos destination-patch-pos passenger-meta-path)
+      set p-init-data data
+    ]
+    
+    set init-data (list FLOORS platforms count passengers count trains count portals)
+  ]
+end

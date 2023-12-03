@@ -3,16 +3,21 @@ to go
   move-passengers
   collide-passengers
   repel-passengers-from-wall
+  log-passengers-tick
   update-passengers-path 
   
   ifelse count moving-passengers = 0 [
     if first-end [
       show "REACHED END"
       set first-end false 
+      
+      log-reached-end
+      
+      save-logs
     ]
   ]
   [
-  tick
+    tick  
   ]
 end
 
@@ -172,10 +177,15 @@ to collide-passengers
       set sum-collisions-vector (list 0 0) 
       let self-x xcor
       let self-y ycor
-      let possible-collision-around-passengers [passengers-here] of neighbors 
+      
+      ;triaging
+      let possible-collision-around-passengers [passengers-here] of neighbors
       let possible-collision-here-passenger other [passengers-here] of patch-here 
       let possible-collision-passengers (turtle-set possible-collision-around-passengers possible-collision-here-passenger)
+      ; end triaging
       set possible-collision-passengers moving-passengers-set possible-collision-passengers
+
+
       let collision-passengers possible-collision-passengers in-radius true-collision-radius
       let sum-x 0
       let sum-y 0
@@ -184,31 +194,31 @@ to collide-passengers
         let d-y abs self-y - ycor 
         let collision-vector (list d-x d-y)
         let _repel-vector repel-vector collision-vector
-;        let overlap-collision-vector subtract-magnitude-from-vector collision-vector true-collision-radius
-;        let force-x item 0 overlap-collision-vector
-;        let force-y item 1 overlap-collision-vector
-;        set force-x d-x
-;        set force-y d-y
+        ;        let overlap-collision-vector subtract-magnitude-from-vector collision-vector true-collision-radius
+        ;        let force-x item 0 overlap-collision-vector
+        ;        let force-y item 1 overlap-collision-vector
+        ;        set force-x d-x
+        ;        set force-y d-y
         let force-x item 0 _repel-vector
         let force-y item 1 _repel-vector 
         
         
         set sum-x sum-x + force-x
         set sum-y sum-y + force-y
-;        show (list "    original collision" collision-vector "overlap collision" _repel-vector "sum-x sum-y" sum-x sum-y)
+        ;        show (list "    original collision" collision-vector "overlap collision" _repel-vector "sum-x sum-y" sum-x sum-y)
       ]
       let sum-force-x collision-force-multiplier * sum-x
       let sum-force-y collision-force-multiplier * sum-y
       let all-collisions-vector (list sum-force-x sum-force-y)
       let crowdness-proportional-collisions-vector scale-vector all-collisions-vector ( 1 / ( count collision-passengers + 1))
       set sum-collisions-vector crowdness-proportional-collisions-vector
-;      show (list "original sum-x sum-y" sum-x sum-y "multiplied force" sum-force-x sum-force-y)
+      ;      show (list "original sum-x sum-y" sum-x sum-y "multiplied force" sum-force-x sum-force-y)
     ]
     ; apply collision-vectors
     ask moving-passengers [
       let d-x item 0 sum-collisions-vector
       let d-y item 1 sum-collisions-vector
-;      show (list "changing coors from " xcor ycor "to " (xcor + d-x) (ycor + d-y ))
+      ;      show (list "changing coors from " xcor ycor "to " (xcor + d-x) (ycor + d-y ))
       
       ; using clamp while repel force is not very well established, and map with no borders
       let new-x clamp (xcor + d-x) 0 ( world-width + 1)
@@ -236,7 +246,7 @@ to repel-passengers-from-wall
       let repel-to-wall-border-vector symmetric-vector in-wall-vector ; repel vector is the symmetric of the inside wall vector
       let repel-from-border-vector scale-vector ( normalize-vector repel-to-wall-border-vector ) wall-collision-repel ; add some margin to get away from wall
       let ensure-patch-repel-vector add-vector repel-to-wall-border-vector repel-from-border-vector
-
+      
       let d-x item 0 ensure-patch-repel-vector
       let d-y item 1 ensure-patch-repel-vector
       
@@ -275,12 +285,14 @@ to update-passengers-path
                 if [p-is-portal?] of platform-path-to [
                   ; to is portal  
                   let platform-path-to-portal one-of [portals-here] of platform-path-to
+;                  show "both are portals"
                   let portals-access access-with platform-path-to-portal
+;                  show (list "access" portals-access)
                   if portals-access != nobody [
                     ; the meta-path uses the portals
                     ask this-passenger [
-                    set passenger-move-delay [p-cost] of portals-access 
-                    set passenger-meta-path-index passenger-meta-path-index + 1
+                      set passenger-move-delay [p-cost] of portals-access 
+                      set passenger-meta-path-index passenger-meta-path-index + 1
                       let px [pxcor] of patch-here
                       let py [pycor] of patch-here
                       let d_x xcor - px
@@ -288,6 +300,13 @@ to update-passengers-path
                       move-to platform-path-to-portal
                       set xcor xcor + d_x
                       set ycor ycor + d_y
+                      
+                      let this-tick-data last p-tick-data
+                      let tick-data-length length p-tick-data
+                      let this-tick-data-pos first this-tick-data
+                      set this-tick-data-pos lput this-tick-data-pos (list xcor ycor)
+                      set this-tick-data replace-item 0 this-tick-data this-tick-data-pos
+                      set p-tick-data replace-item  ( tick-data-length - 1 ) p-tick-data this-tick-data
                     ]
                   ]
                 ]
@@ -297,9 +316,9 @@ to update-passengers-path
         ]
       ]
     ][
-    ; TODO
-    ; check if destination is "good enough" at least when it comes to portals.
-    ; Maybe, have destination as a temp variable, and allow it to change in case of crowdeness
+      ; TODO
+      ; check if destination is "good enough" at least when it comes to portals.
+      ; Maybe, have destination as a temp variable, and allow it to change in case of crowdeness
       
     ]
   ]
@@ -313,16 +332,53 @@ end
 
 ; passenger
 to-report get-next-destination 
-    ; Get destination (assume indexs are alright (within bounds and updated)
-    let platform-path get-next-path
-    let next-destination item passenger-simple-path-index platform-path
-    report next-destination
+  ; Get destination (assume indexs are alright (within bounds and updated)
+  let platform-path get-next-path
+  let next-destination item passenger-simple-path-index platform-path
+  report next-destination
 end
 
 to-report moving-passengers
-   report passengers with [not reached-destination]
+  report passengers with [not reached-destination]
 end
 
 to-report moving-passengers-set [passengers-set]
   report passengers-set with [not reached-destination]
+end
+
+
+to log-passengers-tick
+  if LOG-DATA [
+    ask moving-passengers [
+      let biggest-radius-multiplier last LOG-CROWDNESS-RADII 
+      let biggest-radius biggest-radius-multiplier * true-collision-radius
+      let possible-passengers-in-radius other moving-passengers
+      let passengers-in-biggest-radius possible-passengers-in-radius in-radius biggest-radius
+      
+      let crowdnesses []
+      let radii-index 0
+      while [radii-index < length LOG-CROWDNESS-RADII - 1] [
+        let new-radius-multiplier item radii-index LOG-CROWDNESS-RADII
+        let new-radius new-radius-multiplier * true-collision-radius
+        let passengers-in-new-radius passengers-in-biggest-radius in-radius new-radius
+        let count-passengers-in-new-radius count passengers-in-new-radius
+        set crowdnesses lput count-passengers-in-new-radius crowdnesses
+        set radii-index radii-index + 1
+      ]
+      set crowdnesses lput count passengers-in-biggest-radius crowdnesses
+      
+      let data (list (list (list xcor ycor)) heading crowdnesses)
+      set p-tick-data lput data p-tick-data
+    ] 
+  ]
+end
+
+to log-reached-end 
+  if LOG-DATA [
+    ask passengers [
+    set p-end-data []
+    ]
+    
+    set end-data []
+  ]
 end

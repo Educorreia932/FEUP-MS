@@ -12,7 +12,9 @@ passengers-own [source-patch source destination destination-patch spawned
   passenger-meta-path passenger-meta-path-index passenger-simple-path-index
   passenger-move-delay ; Contemplate portal access cost. Check proportionality to normal step cost (due to how meta-pathing works and passenger-step)
   reached-destination 
-  sum-collisions-vector]
+  sum-collisions-vector
+  p-init-data p-tick-data p-end-data ;logging
+]
 trains-own [is-a-poi direction-vector]
 train-cells-own [belong-to-train]
 portals-own [portal-id portal-connect-ids]

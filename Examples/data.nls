@@ -1,0 +1,19 @@
+
+to save-logs
+  let date format-io-date date-and-time
+  let file_name (word LOG-FOLDER date ".txt")
+  print ( word "Saving data to " file_name)
+  file-open file_name
+  file-print init-data
+  file-print tick-data
+  file-print end-data
+  
+  ask passengers [
+   file-print p-init-data
+   file-print p-tick-data
+   file-print p-end-data 
+  ]
+  
+  print ( word "Finished saving. Closing file")
+  file-close
+end
