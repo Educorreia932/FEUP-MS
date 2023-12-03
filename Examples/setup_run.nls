@@ -186,10 +186,10 @@ end
 to log-setup-run
   if LOG-DATA [
     ask passengers[
-      let pos (list xcor ycor)
-      let source-pos (list [pxcor] of [patch-here] of source [pycor] of [patch-here] of source)
-      let destination-patch-pos (list [pxcor] of destination-patch [pycor] of destination-patch)
-      let destination-pos (list [pxcor] of [patch-here] of destination [pycor] of [patch-here] of destination)
+      let pos pos-info (list xcor ycor)
+      let source-pos pos-info (list [pxcor] of [patch-here] of source [pycor] of [patch-here] of source)
+      let destination-patch-pos pos-info (list [pxcor] of destination-patch [pycor] of destination-patch)
+      let destination-pos pos-info (list [pxcor] of [patch-here] of destination [pycor] of [patch-here] of destination)
       let data (list pos source source-pos destination destination-pos destination-patch-pos passenger-meta-path)
       set p-init-data data
     ]

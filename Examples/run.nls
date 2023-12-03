@@ -305,7 +305,7 @@ to update-passengers-path
                       let this-tick-data last p-tick-data
                       let tick-data-length length p-tick-data
                       let this-tick-data-pos first this-tick-data
-                      set this-tick-data-pos lput (list xcor ycor) this-tick-data-pos
+                      set this-tick-data-pos lput pos-info (list xcor ycor) this-tick-data-pos
                       set this-tick-data replace-item 0 this-tick-data this-tick-data-pos
                       set p-tick-data replace-item  ( tick-data-length - 1 ) p-tick-data this-tick-data
                     ]
@@ -347,6 +347,18 @@ to-report moving-passengers-set [passengers-set]
   report passengers-set with [not reached-destination]
 end
 
+; observer
+to-report pos-info [pos] 
+  let abs-x item 0 pos
+  let abs-y item 1 pos
+  let p patch abs-x abs-y
+  let floor-id [pfloor-id] of p
+  let floor-x [pfloor-x] of p
+  let floor-y [pfloor-y] of p
+  let platform [p-platform] of p
+  report (list abs-x abs-y floor-id platform floor-x floor-y)
+end
+
 
 to log-passengers-tick
   if LOG-DATA [
@@ -368,7 +380,7 @@ to log-passengers-tick
       ]
       set crowdnesses lput count passengers-in-biggest-radius crowdnesses
       
-      let data (list (list (list xcor ycor)) heading crowdnesses)
+      let data (list (list pos-info (list xcor ycor)) heading crowdnesses)
       set p-tick-data lput data p-tick-data
     ] 
   ]

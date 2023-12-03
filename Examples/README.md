@@ -1,5 +1,5 @@
 Experiment file \<date>.txt
-\<pos> is either [\<xcor> \<ycor>] or [\<pxcor> \<pyxcor>]
+\<pos> is either the position of a turtle or of a patch. It has the information [\<abs x> \<abs y> <floor number> <platform number> <floor x> <floor y>]
 
 ```
 [<number of floors> <floor-width> <floor-height> <number of platforms> <number of passengers> <number of trains> <number of portals>]
