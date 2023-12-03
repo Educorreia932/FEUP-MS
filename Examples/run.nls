@@ -160,7 +160,7 @@ to move-passengers
     let next-destination get-next-destination
     
     ifelse passenger-move-delay > 0 [
-      set passenger-move-delay passenger-move-delay - 1
+      set passenger-move-delay passenger-move-delay - 1 ; Might be negative but that's alright
     ]
     [
       ; Move
