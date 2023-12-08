@@ -165,7 +165,13 @@ to move-passengers
     [
       ; Move
       face next-destination
-      fd passenger-step
+      
+      ifelse [is-up-esc] of patch-here or [is-down-esc] of patch-here [
+        fd passenger-step * escalator-speed-multiplier 
+      ]
+      [
+        fd passenger-step
+      ]
     ]
   ]
 end

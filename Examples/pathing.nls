@@ -332,7 +332,7 @@ to-report p-pathfind [start-vertex goal-vertex]
     set closed-set lput current-vertex closed-set
     
     ask current-vertex [
-      let neighbors-that-are-pathable neighbors with [
+      let neighbors-that-are-pathable neighbors4 with [
         is-pathable-from current-vertex
         and 
         is-straight-path-pos (list [pxcor] of current-vertex [pycor] of current-vertex) (list pxcor pycor)]
@@ -345,6 +345,12 @@ to-report p-pathfind [start-vertex goal-vertex]
       ]; BUG for some reason it's not working with the variable?
       [
         if not member? self closed-set [
+          let cost distance current-vertex
+          if ([is-up-esc] of current-vertex or [is-down-esc] of current-vertex)
+          [ 
+            show "ESCALATORS ARE GOOD, LET'S TAKE THEM"
+            set cost cost / escalator-pathing-multiplier
+          ]
           let tentative-g [g-score] of current-vertex + distance current-vertex 
           if not member? self open-set or tentative-g < g-score [ 
             set g-score tentative-g

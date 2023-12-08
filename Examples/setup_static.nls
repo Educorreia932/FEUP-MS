@@ -16,7 +16,7 @@ globals [
   ; CONSTANTS
   ; trains
   train-width train-height train-gap train-length
-  elevator-cost-multiplier
+  elevator-cost-multiplier escalator-pathing-multiplier escalator-speed-multiplier
   
   ; turtle
   turtle-radius 
@@ -70,6 +70,8 @@ to setup-constants
   set train-gap 2
   set train-length 2
   set elevator-cost-multiplier 4
+  set escalator-pathing-multiplier 9 ; bigger is better
+  set escalator-speed-multiplier 3
   
   set turtle-radius 0.3
   set turtle-shape "person"
