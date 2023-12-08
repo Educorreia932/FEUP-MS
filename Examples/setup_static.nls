@@ -21,21 +21,22 @@ globals [
   ; turtle
   turtle-radius 
   turtle-size turtle-shape ;visualization only
-
+  straight-pathing-step
+  
   ;patch colors
   COLOR-TRAIN-LINE COLOR-GROUND COLOR-WALL COLOR-BOUNDARY COLOR-STAIR COLOR-ELEVATOR
   COLOR-UPWARDS-ESCALATOR-ENTRY COLOR-UPWARDS-ESCALATOR COLOR-UPWARDS-ESCALATOR-EXIT
   COLOR-DOWNWARDS-ESCALATOR-ENTRY COLOR-DOWNWARDS-ESCALATOR COLOR-DOWNWARDS-ESCALATOR-EXIT
   PCS-PLATFORM PCS-PORTAL
   ;patch type pt
-  PT-TRAIN-LINE PT-TRAIN PT-PLATFORM PT-GROUND PT-WALL PT-BOUNDARY PT-STAIR PT-ELEVATOR
+  PT-TRAIN-LINE PT-TRAIN PT-PLATFORM PT-GROUND PT-WALL PT-BOUNDARY PT-STAIR PT-ELEVATOR 
   PT-UP-ESC-ENTRY PT-UP-ESC PT-UP-ESC-EXIT PT-DOWN-ESC-ENTRY PT-DOWN-ESC PT-DOWN-ESC-EXIT
-  PTS-PATHABLE PTS-DESTINY PTS-PORTAL
+  PTS-PATHABLE PTS-ALWAYS-PATHABLE PTS-DESTINY PTS-PORTAL
   
   ;turtle type tt
   TT-POI TTS-PORTAL TT-STAIR TT-ELEVATOR
   TTS-PATHABLE
-
+  
   ;pathing
   pathing INFINITY
   
@@ -46,11 +47,12 @@ globals [
 
 
 to setup-configs
-  set FILE "assets/small_station.png"
+  ;  set FILE "assets/small_station.png"
   set FILE "assets/4_platforms_3_floors_station.png"
-  set FILE "assets/4_platforms_3_floors_station_elevators.png"
+  ;  set FILE "assets/4_platforms_3_floors_station_elevators.png"
   ; set FILE "assets/turtle_pathfinding_2.png"
-  set FLOORS 3
+  set FILE "assets/2_floors_station_escalators.png"
+  set FLOORS 2
   set LOG-DATA true
   set LOG-FOLDER "experiments/"
 end
@@ -67,11 +69,12 @@ to setup-constants
   set train-height 5
   set train-gap 2
   set train-length 2
+  set elevator-cost-multiplier 4
   
   set turtle-radius 0.3
   set turtle-shape "person"
   set turtle-size 0.5
-  set elevator-cost-multiplier 4
+  set straight-pathing-step 0.3
   
   set LOG-CROWDNESS-RADII [] ; In setup_run
   
@@ -83,7 +86,7 @@ to setup-constants
   set COLOR-BOUNDARY [245 0 255]
   set COLOR-STAIR [255 255 0]
   set COLOR-ELEVATOR [255 159 0]
-
+  
   set COLOR-UPWARDS-ESCALATOR-ENTRY  [1 107 129]
   set COLOR-UPWARDS-ESCALATOR  [1 129 67] 
   set COLOR-UPWARDS-ESCALATOR-EXIT [99 255 99]
@@ -98,7 +101,7 @@ to setup-constants
     COLOR-DOWNWARDS-ESCALATOR-ENTRY COLOR-DOWNWARDS-ESCALATOR COLOR-DOWNWARDS-ESCALATOR-EXIT  
   )
   set PCS-PORTAL (list COLOR-STAIR COLOR-ELEVATOR)
-
+  
   set PT-TRAIN-LINE "TRAIN_LINE"
   set PT-TRAIN "TRAIN"
   set PT-PLATFORM "PLATFORM"
@@ -113,18 +116,21 @@ to setup-constants
   set PT-DOWN-ESC-ENTRY "DEEN"
   set PT-DOWN-ESC "DE"
   set PT-DOWN-ESC-EXIT "DEEX"
-
-  set PTS-PATHABLE (list PT-GROUND PT-TRAIN PT-STAIR PT-ELEVATOR)
+  
+  set PTS-PATHABLE (list PT-GROUND PT-TRAIN PT-STAIR PT-ELEVATOR
+    PT-UP-ESC-ENTRY PT-UP-ESC PT-UP-ESC-EXIT PT-DOWN-ESC-ENTRY PT-DOWN-ESC PT-DOWN-ESC-EXIT 
+  )
+  set PTS-ALWAYS-PATHABLE (list PT-GROUND PT-TRAIN PT-STAIR PT-ELEVATOR)
   set PTS-DESTINY (list PT-TRAIN)
   set PTS-PORTAL (list PT-STAIR PT-ELEVATOR)
-
+  
   set TT-POI "POI"
   set TT-STAIR "STAIR"
   set TT-ELEVATOR "ELEVATOR"
-
+  
   set TTS-PATHABLE (list TT-POI TT-STAIR TT-ELEVATOR)
   set TTS-PORTAL (list TT-STAIR TT-ELEVATOR)
-
+  
   set INFINITY 999999
   
   set init-data []

@@ -25,7 +25,7 @@ end
 
 ; observer
 to-report does-intersect-turtle-pos-patch [t-pos p]
-;  show (list "intersecting" t-pos "with one patch" p "is pthabel" [is-pathable] of p)
+  ; See if intersects with walls (or otherwise places where no passenger can be at)
   if [is-pathable] of p [
     report false 
   ]
