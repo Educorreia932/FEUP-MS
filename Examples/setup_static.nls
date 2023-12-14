@@ -11,7 +11,8 @@ globals [
   PLATFORMS
 
   ; PROGRAMMNG CONSTANTS
-  TIME-MONTHS TIME-PM-STR
+  TIME-MONTHS TIME-PM-STR 
+  TIME-MONTH-STR-SIZE
   
   ; CONSTANTS
   ; trains
@@ -58,10 +59,23 @@ to setup-configs
 end
 
 to setup-programming-constants
-  set TIME-MONTHS ["jan" "fev" "mar" "abr" "mai" "jun" "jul" "ago" "set" "out" "nov" "dez"]
-  set TIME-PM-STR "da tarde"
+  let time-str date-and-time
+  let am-in-string member? "AM" time-str
+  let pm-in-string member? "PM" time-str
+  
+  let is-english-lang ( am-in-string or pm-in-string)
+  
+  ifelse is-english-lang[
+    set TIME-MONTHS ["jan" "feb" "mar" "apr" "may" "jun" "jul" "aug" "sep" "oct" "nov" "dec"] 
+      set TIME-PM-STR "PM"
+      set TIME-MONTH-STR-SIZE 3
+    ]
+    [
+      set TIME-MONTHS ["jan" "fev" "mar" "abr" "mai" "jun" "jul" "ago" "set" "out" "nov" "dez"]
+      set TIME-PM-STR "da tarde"
+      set TIME-MONTH-STR-SIZE 4
+    ]
 end
-
 
 to setup-constants
 
