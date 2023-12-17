@@ -19,3 +19,33 @@ p-end-data:
 ```
 []
 ```
+
+
+Experimen file \<date>_metadata.txt
+init data:
+```
+[<number of floors> <floor-width> <floor-height> <number of platforms> <number of passengers> <number of trains> <number of portals>]
+```
+tick data:
+```
+[]
+```
+
+end data:
+```
+[]
+```
+\number of passengers lines
+p-init-data:
+
+```
+
+```
+
+p-end-data:
+```
+[<starting pos> <source name: (<type> <id>)> <source pos> <destination name: (<type> <id>)> <destination pos> <destination patch pos> <passenger meta path (path of paths)>]
+```
+
+Experiment file \<date>_tickdata.txt
+See header
