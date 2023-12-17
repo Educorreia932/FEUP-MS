@@ -261,6 +261,16 @@ to init-portals
 
 end
 
+; patch
+to-report p-poi-id
+  let poi-pts filter [i -> member? i PTS-DESTINY] pts
+  let poi-pt first poi-pts
+  let poi-index position poi-pt pts
+  let poi-id-to-report item poi-index pts-ids
+  report poi-id-to-report  
+end
+
+
 ; observer
 to init-lines
   let train-line-id 0
@@ -275,6 +285,98 @@ to init-lines
     set non-instantiated-train-line min-one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts ][p-index]
     set train-line-id train-line-id + 1
   ]
+end
+
+
+; observer
+to init-spawners
+  init-lines
+  ifelse any? patches with [pcolor = COLOR-TRAIN] [
+   ; We have a predetermined position for the trains 
+  ]
+  [
+   init-lines 
+  ]
+  
+  let number-pois count trains
+  init-outsides
+end
+
+
+; patch
+to-report sprout-outside
+  let sprouted-outside-poi 0
+  let outside-poi-id p-poi-id
+  sprout-outsides 1 [
+    ; outside-poi
+    set is-a-poi true
+
+    ; turtle
+    set color [133 133 133]
+    set shape "house"
+
+    set tfloor-id pfloor-id
+    set tfloor-x pfloor-x
+    set tfloor-y pfloor-y
+    set tt TT-POI
+    set tt-id p-poi-id
+
+    set poi-paths []
+    set init-poi-paths false
+
+    set sprouted-outside-poi self
+  ]
+
+  report sprouted-outside-poi
+end
+
+
+to init-outside [outside-id-to-init]
+  let outside-patches patches with [
+    not empty? filter [i -> member? i PTS-DESTINY] pts
+    and
+    p-poi-id = outside-id-to-init
+  ]
+  let centroid-outside get-centroid outside-patches
+
+  ask centroid-outside [
+    let main-outside sprout-outside
+    ask outside-patches [
+        sprout-outside-cells 1 [
+          set color red
+          set belong-to-outside main-outside
+        ]
+    ]
+  ]
+end
+
+to init-outsides
+  let pois-id count turtles with [tt = TT-POI]
+  let remaining-outsides true
+  while [remaining-outsides] [
+    let non-instantiated-outsides patches with [
+      pcolor = COLOR-OUTSIDE
+      and
+      empty? filter [i -> member? i PTS-DESTINY] pts
+    ]
+    
+    ifelse any? non-instantiated-outsides [
+      let non-instantiated-outside min-one-of non-instantiated-outsides [p-index]
+      ask non-instantiated-outside [
+        set pts lput PT-OUTSIDE pts
+        set pts-ids lput pois-id pts-ids
+        flood-zone PT-OUTSIDE pois-id COLOR-OUTSIDE
+      ]
+      init-outside pois-id
+      set pois-id pois-id + 1
+    ]
+    [
+      set remaining-outsides false
+    
+    ]
+  ]
+
+  
 end
 
 ; patch
@@ -380,7 +482,6 @@ to init-rail
       stop
     ]
   ]
-
 end
 
 ;patch
@@ -467,6 +568,7 @@ to init-train [heading-vector]
     set length-index length-index + 1
   ]
 end
+ 
 
 
 to setup-data
@@ -475,6 +577,7 @@ to setup-data
   init-platforms
   init-grounds
   init-portals
-  init-lines
+  init-spawners
+  ; init-lines
   init-path-finding
 end
