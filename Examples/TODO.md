@@ -1,4 +1,4 @@
-Better path - (already maximally normalized)
+DONE - Better path - (already maximally normalized)
     should instead try to be an agent moving, and can move with an aribtrary angle
     check collision with adjancent walls? cannot move through a corner. Otherwise can ignore the corner?
         let a 2 * n grid
@@ -7,17 +7,17 @@ Better path - (already maximally normalized)
             Maybe check patch-ahead, patch-left-and-ahead, patch-right-and-ahead
 
     
-pathfinding- change way to obtain pathable neighbors in p-pathfinding so diagonals are not adjancent if there is an obstacle in either side? meaning if not pathable diagonal 1 or not pathable diagonal 2 then not adjacent
+DONE - pathfinding- change way to obtain pathable neighbors in p-pathfinding so diagonals are not adjancent if there is an obstacle in either side? meaning if not pathable diagonal 1 or not pathable diagonal 2 then not adjacent
 
-meta-path-finding
+DONE - meta-path-finding
 
-for passengers, pathfinding from the head of the train will be very inneficient. will probably need to calculate from scratch. might be very slow at the very start? Otherwise, it will be better
+TODO - for passengers, pathfinding from the head of the train will be very inneficient. will probably need to calculate from scratch. might be very slow at the very start? Otherwise, it will be better
 Therefore, it is only useful to keep the static pathfinding in platforms where we do not have our final source or our final destination. 
     Given that the portal we might use is not defined. doing the meta-pathfinding will also need to be done at a passenger level
         for now do it just to have it
 
-boarding zone per train?
-boarding zone min and max for each findable?
+TODO - boarding zone per train?
+TODO -  boarding zone min and max for each findable?
 
 
 
@@ -55,3 +55,14 @@ Bug when running everything (since it was updated to pathfind most likely! Path 
 
 TODO    
  Change neighbors to neighbors 8 (we are already checking if it's straight so getting the diagonal is optimal)
+
+First: see if the files were saved. Otherwise copy the ones in vsc
+ Problem: Going on the diagonal for escalators is not working
+ also, i think I am calling the straigthener too many times? Probably why it is so slow as a whole? and why there aer so many prints
+
+
+A*? Are we using A* for pathfinding 
+
+
+Pathing each tick
+    Number of passengers in each turtle increases the cost

@@ -5,7 +5,7 @@ to go
   repel-passengers-from-wall
   log-passengers-tick
   update-passengers-path 
-  
+    
   ifelse count moving-passengers = 0 [
     if first-end [
       show "REACHED END"
@@ -13,7 +13,8 @@ to go
       
       log-reached-end
       
-      save-logs
+      ; save-logs
+      save-digestable-logs
     ]
   ]
   [
@@ -291,9 +292,9 @@ to update-passengers-path
                 if [p-is-portal?] of platform-path-to [
                   ; to is portal  
                   let platform-path-to-portal one-of [portals-here] of platform-path-to
-;                  show "both are portals"
+                  ;                  show "both are portals"
                   let portals-access access-with platform-path-to-portal
-;                  show (list "access" portals-access)
+                  ;                  show (list "access" portals-access)
                   if portals-access != nobody [
                     ; the meta-path uses the portals
                     ask this-passenger [
@@ -310,9 +311,12 @@ to update-passengers-path
                       ; log portal transition
                       let this-tick-data last p-tick-data
                       let tick-data-length length p-tick-data
-                      let this-tick-data-pos first this-tick-data
-                      set this-tick-data-pos lput pos-info (list xcor ycor) this-tick-data-pos
-                      set this-tick-data replace-item 0 this-tick-data this-tick-data-pos
+                      let this-tick-data-pos item 2 this-tick-data
+                      let new-label [tt] of platform-path-from-portal
+                      let new-pos-info pos-info (list xcor ycor)
+                      set this-tick-data-pos replace-item 1  this-tick-data-pos new-label
+                      set this-tick-data-pos replace-item 2  this-tick-data-pos new-pos-info
+                      set this-tick-data replace-item 2 this-tick-data this-tick-data-pos
                       set p-tick-data replace-item  ( tick-data-length - 1 ) p-tick-data this-tick-data
                     ]
                   ]
@@ -365,29 +369,32 @@ to-report pos-info [pos]
   report (list abs-x abs-y floor-id platform floor-x floor-y)
 end
 
-
+; passenger
+to log-passenger-tick
+  let biggest-radius-multiplier last LOG-CROWDNESS-RADII 
+  let biggest-radius biggest-radius-multiplier * true-collision-radius
+  let possible-passengers-in-radius other moving-passengers
+  let passengers-in-biggest-radius possible-passengers-in-radius in-radius biggest-radius
+  
+  let crowdnesses []
+  let radii-index 0
+  while [radii-index < length LOG-CROWDNESS-RADII - 1] [
+    let new-radius-multiplier item radii-index LOG-CROWDNESS-RADII
+    let new-radius new-radius-multiplier * true-collision-radius
+    let passengers-in-new-radius passengers-in-biggest-radius in-radius new-radius
+    let count-passengers-in-new-radius count passengers-in-new-radius
+    set crowdnesses lput count-passengers-in-new-radius crowdnesses
+    set radii-index radii-index + 1
+  ]
+  set crowdnesses lput count passengers-in-biggest-radius crowdnesses
+  
+  let data (list who ticks (list pos-info (list xcor ycor) "none" pos-info (list xcor ycor)) heading crowdnesses)
+  set p-tick-data lput data p-tick-data
+end
 to log-passengers-tick
   if LOG-DATA [
     ask moving-passengers [
-      let biggest-radius-multiplier last LOG-CROWDNESS-RADII 
-      let biggest-radius biggest-radius-multiplier * true-collision-radius
-      let possible-passengers-in-radius other moving-passengers
-      let passengers-in-biggest-radius possible-passengers-in-radius in-radius biggest-radius
-      
-      let crowdnesses []
-      let radii-index 0
-      while [radii-index < length LOG-CROWDNESS-RADII - 1] [
-        let new-radius-multiplier item radii-index LOG-CROWDNESS-RADII
-        let new-radius new-radius-multiplier * true-collision-radius
-        let passengers-in-new-radius passengers-in-biggest-radius in-radius new-radius
-        let count-passengers-in-new-radius count passengers-in-new-radius
-        set crowdnesses lput count-passengers-in-new-radius crowdnesses
-        set radii-index radii-index + 1
-      ]
-      set crowdnesses lput count passengers-in-biggest-radius crowdnesses
-      
-      let data (list (list pos-info (list xcor ycor)) heading crowdnesses)
-      set p-tick-data lput data p-tick-data
+      log-passenger-tick
     ] 
   ]
 end

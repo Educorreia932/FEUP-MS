@@ -58,11 +58,11 @@ to setup-run
   setup-run-constants
   setup-spawning
   ask links [hide-link]
+  clear-drawing
+  reset-ticks
   
   log-setup-run
   
-  clear-drawing
-  reset-ticks
 
 end
 
@@ -192,6 +192,7 @@ to log-setup-run
       let destination-pos pos-info (list [pxcor] of [patch-here] of destination [pycor] of [patch-here] of destination)
       let data (list pos source source-pos destination destination-pos destination-patch-pos passenger-meta-path)
       set p-init-data data
+      log-passenger-tick ; register tick 0
     ]
     
     set init-data (list FLOORS floor-height floor-width platforms count passengers count trains count portals)

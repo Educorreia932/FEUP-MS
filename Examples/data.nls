@@ -9,11 +9,107 @@ to save-logs
   file-print end-data
   
   ask passengers [
-   file-print p-init-data
-   file-print p-tick-data
-   file-print p-end-data 
+    file-print p-init-data
+    file-print p-tick-data
+    file-print p-end-data 
   ]
   
   print ( word "Finished saving. Closing file")
   file-close
+end
+
+to save-digestable-logs
+  let date format-io-date date-and-time
+  
+  let meta_file_name (word LOG-FOLDER date "_metadata" ".txt")
+  let file_name (word LOG-FOLDER date "_tickdata" ".txt")
+  print ( word "Saving data of experiment " date )
+  file-open meta_file_name
+  file-print init-data
+  file-print tick-data
+  file-print end-data
+  ask passengers [
+   file-print p-init-data
+   file-print p-end-data 
+  ]
+  file-close
+  
+  file-open file_name
+  let header "who,tick,xcor-init-pos,ycor-init-pos,floor-id-init-pos,platform-init-pos,floor-x-init-pos,floor-y-init-pos,floor-transition,xcor-final-pos,ycor-final-pos,floor-id-final-pos,platform--final-pos,floor-x-final-pos,floor-y-final-pos,heading"
+  let crowdness-radii-header (word "crowdness-" first LOG-CROWDNESS-RADII)
+  let index 1
+  repeat length LOG-CROWDNESS-RADII - 1 [
+    let new-crowdness-radii-column item index LOG-CROWDNESS-RADII
+    set crowdness-radii-header (word crowdness-radii-header ",crowdness-" new-crowdness-radii-column)
+    set index index + 1
+  ]
+  set header (word header "," crowdness-radii-header)
+  file-print header
+  
+  ask passengers [
+   foreach p-tick-data [
+     one-tick-data ->
+      let tick-data-list-str array-to-object-str recursive-array-flatten one-tick-data
+      let tick-data-plain-str substring tick-data-list-str 1  ( ( length tick-data-list-str ) - 1 )
+      file-print tick-data-plain-str
+    ] 
+  ]
+  
+  file-close
+  print ( word "Finished saving data")
+  
+  
+end
+
+to-report recursive-array-to-object-str [value]
+  if not is-list? value [
+    report value
+  ]
+  
+  let item-0 item 0 value
+  let index 1
+  let object-str "["
+  set object-str (word  object-str recursive-array-to-object-str item-0)
+  repeat length value - 1 [
+    let next-item item index value
+    let next-item-object-str recursive-array-to-object-str next-item
+    set object-str (word object-str "," next-item-object-str)
+    set index index + 1 
+  ] 
+  set object-str (word object-str "]")
+  report object-str
+end
+
+to-report array-to-object-str [value]
+  let item-0 item 0 value
+  let index 1
+  let object-str "["
+  set object-str (word  object-str item-0)
+  repeat length value - 1 [
+    let next-item item index value
+    set object-str (word object-str "," next-item)
+    set index index + 1 
+  ] 
+  set object-str (word object-str "]")
+  report object-str
+end
+
+to-report recursive-array-flatten [value]
+  if not is-list? value [
+    report value 
+  ]
+  
+  let item-0 item 0 value
+  let flattened-list recursive-array-flatten item-0
+  
+  let index 1
+  repeat length value - 1 [
+    let next-item item index value 
+    let next-item-flattened recursive-array-flatten next-item
+    set flattened-list sentence flattened-list next-item-flattened
+    
+    set index index + 1
+  ]
+  
+  report flattened-list
 end
