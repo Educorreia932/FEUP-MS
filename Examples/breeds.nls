@@ -38,9 +38,9 @@ patches-own [
 ]
 
 ;; links
-undirected-link-breed [findables findable]
+directed-link-breed [findables findable]
 undirected-link-breed [accesses access]
-undirected-link-breed [pathables pathable]
+directed-link-breed [pathables pathable]
 
 findables-own [f1 f2 f-path f-cost f-p-id ]
 accesses-own [a1 a2 p-cost]

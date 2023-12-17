@@ -1,7 +1,7 @@
 ; observer
 to init-path-finding
   init-portals-pathfinding
-  init-floors-pathfinding-better
+  init-floors-pathfinding
 end
 
 ; observer
@@ -41,71 +41,60 @@ to init-floors-pathfinding
   repeat PLATFORMS [
     let path-found-turtles []
     let poi-turtles turtles with [member? tt TTS-PATHABLE and t-platform = platforms-index]
-    let poi-turtles-with-no-paths poi-turtles with [init-poi-paths = false]
-    while [count poi-turtles-with-no-paths > 0 ][ 
-      ask one-of poi-turtles-with-no-paths[
-        let left-to-pathfind-to [self] of other poi-turtles-with-no-paths
-        let index 0
-        foreach left-to-pathfind-to [
-          let goal item index left-to-pathfind-to
-          let path pathfind-straigthened goal
-          ; let normalized-path normalize-path path
-          let normalized-path path
-          let normalized-path-cost distance-path normalized-path
-          set poi-paths lput path poi-paths
-          create-findable-with goal [
-            set f1 myself
-            set f2 goal
-            set f-path normalized-path
-            set f-cost normalized-path-cost
-            set f-p-id platforms-index
-            set color green
-          ]
-          
-          set index index + 1
+    ask poi-turtles [
+      let to-turtle self
+      ask other poi-turtles [
+        let from-turtle self
+        let path pathfind-straigthened to-turtle
+        let path-cost distance-path path
+        create-findable-to to-turtle [
+          set f1 from-turtle
+          set f2 to-turtle
+          set f-path path
+          set f-cost path-cost
+          set f-p-id platforms-index
+          set color green
         ]
-        set init-poi-paths true
-      ]
-      set poi-turtles-with-no-paths poi-turtles with [init-poi-paths = false]
+      ] 
     ]
     set platforms-index platforms-index + 1
   ]
 end
 
 ; observer
-to init-floors-pathfinding-better
-  let platforms-index 0
-  repeat PLATFORMS [
-    let path-found-turtles []
-    let poi-turtles turtles with [member? tt TTS-PATHABLE and t-platform = platforms-index]
-    let n count poi-turtles
-    ask poi-turtles [
-      let from-turtle self
-      ask other poi-turtles [
-        let to-turtle self
-        if not findable-neighbor? from-turtle [
-          
-          create-findable-with from-turtle [
-            let path []
-            ask from-turtle [
-              set path pathfind-straigthened to-turtle
-            ]
-            let path-cost distance-path path
-            set f1 to-turtle
-            set f2 from-turtle
-            set f-path path
-            set f-cost path-cost
-            set f-p-id platforms-index
-            
-          ] 
-        ]
-      ] 
-    ]
-    set platforms-index platforms-index + 1
-  ]
-  ;  ask findables [hide-link]
-  
-end
+; to init-floors-pathfinding-better
+;   let platforms-index 0
+;   repeat PLATFORMS [
+;     let path-found-turtles []
+;     let poi-turtles turtles with [member? tt TTS-PATHABLE and t-platform = platforms-index]
+;     let n count poi-turtles
+;     ask poi-turtles [
+;       let from-turtle self
+;       ask other poi-turtles [
+;         let to-turtle self
+;         if not findable-neighbor? from-turtle [
+;           
+;           create-findable-with from-turtle [
+;             let path []
+;             ask from-turtle [
+;               set path pathfind-straigthened to-turtle
+;             ]
+;             let path-cost distance-path path
+;             set f1 to-turtle
+;             set f2 from-turtle
+;             set f-path path
+;             set f-cost path-cost
+;             set f-p-id platforms-index
+;             
+;           ] 
+;         ]
+;       ] 
+;     ]
+;     set platforms-index platforms-index + 1
+;   ]
+;   ;  ask findables [hide-link]
+;   
+; end
 
 
 
@@ -194,7 +183,7 @@ to-report is-pathable-from [p-from]
       or
       is-up-esc-entry
         or
-        is-down-esc-entry
+      is-down-esc-entry
       )
       [report true] [report false]
       
@@ -303,7 +292,7 @@ end
 
 ; observer
 to-report p-pathfind [start-vertex goal-vertex]
-  show (list "pathfind start" "goal vertex" goal-vertex)
+  ; show (list "pathfind start" "goal vertex" goal-vertex)
   ask patches with [is-pathable] [
     set g-score infinity
     set h-score h-distance goal-vertex
@@ -329,7 +318,7 @@ to-report p-pathfind [start-vertex goal-vertex]
     ]
     
     set open-set (remove current-vertex open-set)
-    set closed-set lput current-vertex closed-set
+    set closed-set lput current-vertex closed-set 
     
     ask current-vertex [
       let neighbors-that-are-pathable neighbors4 with [
@@ -348,7 +337,6 @@ to-report p-pathfind [start-vertex goal-vertex]
           let cost distance current-vertex
           if ([is-up-esc] of current-vertex or [is-down-esc] of current-vertex)
           [ 
-            show "ESCALATORS ARE GOOD, LET'S TAKE THEM"
             set cost cost / escalator-pathing-multiplier
           ]
           let tentative-g [g-score] of current-vertex + distance current-vertex 
