@@ -29,9 +29,34 @@ to save-digestable-logs
   file-print tick-data
   file-print end-data
   ask passengers [
-   file-print p-init-data
-   file-print p-end-data 
+    file-print p-init-data
+    file-print p-end-data 
   ]
+  ask accesses [
+    let end1-metadata ""
+    let end2-metadata ""
+    let access-type 0
+    let access-metadata ""
+    ask end1 [
+      set access-type tt
+      set end1-metadata pos-info (list xcor ycor)
+    ]
+    ask end2 [
+      set end2-metadata pos-info (list xcor ycor)
+    ] 
+    set access-metadata (list access-type p-cost end1-metadata end2-metadata)
+    
+    file-print access-metadata
+  ]
+  
+  let spawners trains
+;  set spawners turtleset spawners <other spawners}
+  
+  ask spawners [
+   let spawners-metadata (list self tt pos-info (list xcor ycor)) 
+    file-print spawners-metadata
+  ]
+
   file-close
   
   file-open file_name

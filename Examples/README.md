@@ -19,6 +19,15 @@ p-end-data:
 ```
 []
 ```
+\<number of accesses (connections between platforms) lines>
+```
+[<type of access (STAIR or ESCALATOR)> <cost of access> <pos of end 1 of access> <pos of end 2 of access>]
+```
+\<number of spawners lines>
+```
+[<spawner name: <type> <id>> <turtle type: POI> <spawner radius>]
+```
+
 
 
 Experimen file \<date>_metadata.txt
