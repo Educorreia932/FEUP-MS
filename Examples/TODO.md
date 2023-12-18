@@ -66,3 +66,42 @@ A*? Are we using A* for pathfinding
 
 Pathing each tick
     Number of passengers in each turtle increases the cost
+
+
+add file to metadata
+
+
+To speed up the setup run massively!
+    Get a passenger
+    Get their train
+        Get the findable from the train to everyplace else
+    Get an auxiliary turtle moving from the passenger to the 2nd checkpoint of the findable path. When the auxiliary turtle intersects with the original path, then we add that as the a checkpoint on the auxiliarty turle, keep the 2nd of the original and the first is the postiion of the turtle itself
+    (check for the checkpoing and the intersect being or not the same)
+    In the end we are left with
+    original findable path [train, probably first bend, second bend, ..., last bend, destination]
+    passenger path [passenger, intersection, probably first bend, second bend, ..., last bend, destination]
+
+
+To speed up the setup run
+    meta pathfidning source and origin only do outgoing and incoming pathables. (the others will never be treaversed anyway)
+
+To speed up and clean setup run
+    Only kill goal and source findables. Keep the rest
+
+TODO 
+Path straightening didn't work very well apparantely
+
+    
+    This is the full normalized path too
+    [[(patch 99 40) (patch 99 51) (patch 97 51) (patch 97 52) (patch 90 52) (patch 90 53) (patch 82 53) (patch 82 59) (patch 81 67) (patch 81 69) (patch 78 69) (patch 78 71) (patch 77 71) (patch 77 72)] [(patch 77 72) (patch 423 72)] [(patch 423 72) (patch 424 72) (patch 424 74) (patch 427 74) (patch 427 81) (patch 442 81) (patch 442 82) (patch 454 94)]]
+
+    The platform normalized path
+    [(patch 99 40) (patch 99 51) (patch 97 51) (patch 97 52) (patch 90 52) (patch 90 53) (patch 82 53) (patch 82 59) (patch 81 67) (patch 81 69) (patch 78 69) (patch 78 71) (patch 77 71) (patch 77 72)]
+
+    Try to straighten the platform path
+    print p-pathfind-straightened patch 99 40 patch 77 72
+    [(patch 99 40) (patch 98 50) (patch 98 51) (patch 98 52) (patch 97 52) (patch 96 52) (patch 95 52) (patch 94 52) (patch 93 52) (patch 92 52) (patch 91 52) (patch 90 52) (patch 90 53) (patch 89 53) (patch 88 53) (patch 87 53) (patch 86 53) (patch 85 53) (patch 84 53) (patch 83 53) (patch 82 53) (patch 82 54) (patch 82 55) (patch 82 56) (patch 82 57) (patch 82 58) (patch 82 59) (patch 82 67) (patch 82 68) (patch 81 68) (patch 81 69) (patch 80 69) (patch 79 69) (patch 78 69) (patch 78 70) (patch 78 71) (patch 78 72) (patch 77 72)]
+
+
+    straighten-path (list patch 99 40 patch 98 50 patch 98 51 patch 98 52 patch 97 52 patch 96 52 patch 95 52 patch 94 52 patch 93 52 patch 92 52 patch 91 52 patch 90 52 patch 90 53 patch 89 53 patch 88 53 patch 87 53 patch 86 53 patch 85 53 patch 84 53 patch 83 53 patch 82 53 patch 82 54 patch 82 55 patch 82 56 patch 82 57 patch 82 58 patch 82 59 patch 82 67 patch 82 68 patch 81 68 patch 81 69 patch 80 69 patch 79 69 patch 78 69 patch 78 70 patch 78 71 patch 78 72 patch 77 72)
+    > observer: [(patch 99 40) (patch 98 50) (patch 98 51) (patch 98 52) (patch 97 52) (patch 96 52) (patch 95 52) (patch 94 52) (patch 93 52) (patch 92 52) (patch 91 52) (patch 90 52) (patch 90 53) (patch 89 53) (patch 88 53) (patch 87 53) (patch 86 53) (patch 85 53) (patch 84 53) (patch 83 53) (patch 82 53) (patch 82 54) (patch 82 55) (patch 82 56) (patch 82 57) (patch 82 58) (patch 82 59) (patch 82 67) (patch 82 68) (patch 81 68) (patch 81 69) (patch 80 69) (patch 79 69) (patch 78 69) (patch 78 70) (patch 78 71) (patch 78 72) (patch 77 72)]

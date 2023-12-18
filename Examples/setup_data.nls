@@ -291,7 +291,6 @@ end
 ; observer
 to init-spawners
   ifelse any? patches with [pcolor = COLOR-TRAIN] [
-   print "HI THERE"
    ; We have a predetermined position for the trains 
     init-lines
   ]

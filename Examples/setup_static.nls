@@ -1,6 +1,7 @@
 extensions [bitmap]
 
 globals [
+  DEBUG
   ; CONFIG CONSTANTS
   FILE
   FLOORS
@@ -47,7 +48,9 @@ globals [
   init-data tick-data end-data 
   
 ]
-
+to setup-debug
+  set DEBUG false
+end
 
 to setup-configs
   ;  set FILE "assets/small_station.png"
@@ -56,8 +59,9 @@ to setup-configs
   ; set FILE "assets/turtle_pathfinding_2.png"
   set FILE "assets/2_floors_station_escalators.png"
   set FILE "assets/2_floors_station_escalators_entry_exit.png"
-  set FILE "assets/2_floors_station_predetermined_trains.png"
-  set FLOORS 2
+;  set FILE "assets/2_floors_station_predetermined_trains.png"
+  set FILE "assets/trindade.png"
+  set FLOORS 3
   set LOG-DATA true
   set LOG-FOLDER "experiments/"
 end
@@ -91,7 +95,7 @@ to setup-constants
   set escalator-pathing-multiplier 9 ; bigger is better
   set escalator-speed-multiplier 3
   
-  set turtle-radius 0.3
+  set turtle-radius 1
   set turtle-shape "person"
   set turtle-size 0.5
   set straight-pathing-step 0.3
@@ -143,7 +147,7 @@ to setup-constants
   set PTS-PATHABLE (list PT-OUTSIDE PT-TRAIN PT-GROUND PT-STAIR PT-ELEVATOR
     PT-UP-ESC-ENTRY PT-UP-ESC PT-UP-ESC-EXIT PT-DOWN-ESC-ENTRY PT-DOWN-ESC PT-DOWN-ESC-EXIT 
   )
-  set PTS-ALWAYS-PATHABLE (list PT-OUTSIDE PT-TRAIN PT-GROUND  PT-STAIR PT-ELEVATOR)
+  set PTS-ALWAYS-PATHABLE (list PT-OUTSIDE PT-TRAIN PT-GROUND PT-STAIR PT-ELEVATOR)
   set PTS-DESTINY (list PT-TRAIN PT-OUTSIDE)
   set PTS-PORTAL (list PT-STAIR PT-ELEVATOR)
   
@@ -155,7 +159,9 @@ to setup-constants
   set TTS-PORTAL (list TT-STAIR TT-ELEVATOR)
   
   set INFINITY 999999
-  
+end
+
+to setup-world-logs
   set init-data []
   set tick-data []
   set end-data []
@@ -164,15 +170,18 @@ end
 to load
   let img bitmap:import FILE
   resize-world 0 (bitmap:width img - 1) 0 (bitmap:height img - 1)
+  
   set floor-width (world-width - FLOORS - 1 ) / FLOORS
   set floor-height world-height - 2 ; top and bottom edges
-  print (list "height" floor-height "width" floor-width)
+  print (list "Image:" world-height "x" world-width "=>" "floor height" floor-height "floor-width" floor-width )
   bitmap:copy-to-pcolors img false
 end
 
 to setup-static
+  setup-debug
   setup-configs
   setup-programming-constants
   setup-constants
+  setup-world-logs
   load
 end

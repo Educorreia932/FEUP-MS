@@ -2,6 +2,7 @@
 to init-path-finding
   init-portals-pathfinding
   init-floors-pathfinding
+  print "Finished pathfinding"
 end
 
 ; observer
@@ -293,7 +294,10 @@ end
 ; observer
 to-report p-pathfind [start-vertex goal-vertex]
   ; show (list "pathfind start" "goal vertex" goal-vertex)
-  ask patches with [is-pathable] [
+  if [p-platform] of start-vertex != [p-platform] of goal-vertex [
+    show (list "pathfinding patches in different platforms. start:" start-vertex " in " [p-platform] of start-vertex " to end: " goal-vertex " in" [p-platform] of goal-vertex)
+  ]
+  ask patches with [is-pathable and p-platform = [p-platform] of start-vertex] [
     set g-score infinity
     set h-score h-distance goal-vertex
     set f-score (g-score + h-score)
@@ -310,7 +314,9 @@ to-report p-pathfind [start-vertex goal-vertex]
   while [length open-set > 0 ] [
     let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
     
-    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+    if DEBUG [
+      ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+    ]
     
     if current-vertex = goal-vertex [ ; Goal reached
       let path backtrace-path start-vertex goal-vertex
@@ -323,15 +329,10 @@ to-report p-pathfind [start-vertex goal-vertex]
     ask current-vertex [
       let neighbors-that-are-pathable neighbors4 with [
         is-pathable-from current-vertex
-        and 
-        is-straight-path-pos (list [pxcor] of current-vertex [pycor] of current-vertex) (list pxcor pycor)]
-      ;      ask pathable-neighbors
-      ;print (list "pathable neighbors are" neighbors-that-are-pathable)
-      ask neighbors with [
-        is-pathable-from current-vertex
-        and 
-        is-straight-path-pos (list [pxcor] of current-vertex [pycor] of current-vertex) (list pxcor pycor)
-      ]; BUG for some reason it's not working with the variable?
+        ; and 
+        ; is-straight-path-pos (list [pxcor] of current-vertex [pycor] of current-vertex) (list pxcor pycor)
+      ]
+      ask neighbors-that-are-pathable
       [
         if not member? self closed-set [
           let cost distance current-vertex

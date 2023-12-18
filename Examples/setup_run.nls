@@ -63,6 +63,7 @@ to setup-run
   
   log-setup-run
   
+  print "Finished setting up the run"
 
 end
 
@@ -106,7 +107,7 @@ to-report sprout-passenger
       sprout-passengers 1 [
         set size turtle-size
         set shape turtle-shape
-        set color [100 255 255]
+        set color [128 0 128]
         setxy pass-x pass-y
         
         set spawned true
