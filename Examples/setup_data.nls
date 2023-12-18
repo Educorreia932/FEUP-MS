@@ -272,7 +272,7 @@ end
 
 
 ; observer
-to init-lines
+to init-lines-from-train-line
   let train-line-id 0
   let non-instantiated-train-line min-one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts][p-index]
   while [non-instantiated-train-line != nobody] [
@@ -290,18 +290,89 @@ end
 
 ; observer
 to init-spawners
-  init-lines
   ifelse any? patches with [pcolor = COLOR-TRAIN] [
+   print "HI THERE"
    ; We have a predetermined position for the trains 
+    init-lines
   ]
   [
-   init-lines 
+    init-lines-from-train-line
   ]
   
-  let number-pois count trains
   init-outsides
 end
 
+
+to init-lines
+  let pois-id count turtles with [tt = TT-POI]
+  let remaining-trains true
+  
+  while [remaining-trains] [
+    let non-instantiated-trains patches with [
+      pcolor = COLOR-TRAIN
+      and 
+      empty? filter [i -> member? i PTS-DESTINY] pts
+    ] 
+    ifelse any? non-instantiated-trains [
+      let non-instantiated-train min-one-of non-instantiated-trains [p-index]
+      ask non-instantiated-train [
+        set pts lput PT-TRAIN pts
+        set pts-ids lput pois-id pts-ids
+        flood-zone PT-TRAIN pois-id COLOR-TRAIN
+      ] 
+      init-train pois-id
+      set pois-id pois-id + 1
+    ]
+    [
+      set remaining-trains false 
+    ]
+  ]
+end
+
+to init-train [train-id-to-init]
+  let train-patches patches with [
+    not empty? filter [i -> member? i PTS-DESTINY] pts
+    and
+    p-poi-id = train-id-to-init
+  ]
+  let centroid-train get-centroid train-patches
+  
+  ask centroid-train  [
+    let main-train sprout-train
+    ask train-patches [
+      sprout-train-cells 1 [
+        set color red
+        set shape "circle"
+        set belong-to-train main-train
+        hide-turtle
+      ] 
+    ]
+  ]
+  
+end
+
+;patch 
+to-report sprout-train 
+  let sprouted-train-poi 0
+  let train-poi-id p-poi-id
+  sprout-trains 1 [
+    ; train-pio
+    set direction-vector 0
+    set is-a-poi true
+    
+    set color [133 133 133]
+    set tfloor-id pfloor-id
+    set tfloor-x pfloor-x
+    set tfloor-y pfloor-y
+    set tt TT-POI
+    set tt-id train-poi-id
+    
+    set poi-paths []
+    set init-poi-paths false
+  ]
+  
+  report sprouted-train-poi
+end
 
 ; patch
 to-report sprout-outside
@@ -338,14 +409,15 @@ to init-outside [outside-id-to-init]
     p-poi-id = outside-id-to-init
   ]
   let centroid-outside get-centroid outside-patches
-
+  
   ask centroid-outside [
     let main-outside sprout-outside
     ask outside-patches [
-        sprout-outside-cells 1 [
-          set color red
-          set belong-to-outside main-outside
-        ]
+      sprout-outside-cells 1 [
+        set color red
+        set belong-to-outside main-outside
+        hide-turtle
+      ]
     ]
   ]
 end
@@ -476,7 +548,7 @@ to init-rail
         let carriage-direction-vector rotate-vector-clock direction
         let carriage-head get-last checking-ground PT-TRAIN-LINE carriage-direction-vector
         ask carriage-head [
-          init-train carriage-direction-vector
+          init-train-from-vector carriage-direction-vector
         ]
       ]
       stop
@@ -497,7 +569,7 @@ to-report p-train-line
 end
 
 ; patch
-to-report sprout-train [heading-vector]
+to-report sprout-train-from-vector [heading-vector]
   let sprouted-train ""
   let train-id p-train-line
   sprout-trains 1 [
@@ -520,8 +592,8 @@ to-report sprout-train [heading-vector]
   report sprouted-train
 end
 
-to init-train [heading-vector]
-  let inited-train sprout-train heading-vector
+to init-train-from-vector [heading-vector]
+  let inited-train sprout-train-from-vector heading-vector
 
   let train-id [p-train-line] of [patch-here] of inited-train
   let heading_x item 0 heading-vector

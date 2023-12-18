@@ -56,6 +56,7 @@ to setup-configs
   ; set FILE "assets/turtle_pathfinding_2.png"
   set FILE "assets/2_floors_station_escalators.png"
   set FILE "assets/2_floors_station_escalators_entry_exit.png"
+  set FILE "assets/2_floors_station_predetermined_trains.png"
   set FLOORS 2
   set LOG-DATA true
   set LOG-FOLDER "experiments/"
@@ -99,7 +100,7 @@ to setup-constants
   
   set COLOR-OUTSIDE [255 0 0]
   set COLOR-TRAIN-LINE [0 0 255]
-  set COLOR-TRAIN [ 128 128 128]
+  set COLOR-TRAIN [0 255 255]
   set COLOR-GROUND [255 255 255]
   set COLOR-WALL [0 0 0]
   set COLOR-BOUNDARY [245 0 255]
