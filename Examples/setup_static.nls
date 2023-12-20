@@ -95,7 +95,7 @@ to setup-constants
   set escalator-pathing-multiplier 9 ; bigger is better
   set escalator-speed-multiplier 3
   
-  set turtle-radius 1
+  set turtle-radius 0.45
   set turtle-shape "person"
   set turtle-size 0.5
   set straight-pathing-step 0.3
