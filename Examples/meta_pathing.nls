@@ -34,7 +34,7 @@ to-report p-platform-neighbors [nodes]
   let neighbor-nodes 0
   ifelse p-is-portal? [
     let portal-node one-of portals-here
-      print" try"
+    print" try"
     set neighbor-nodes other nodes with [
       p-platform = [p-platform] of myself
       or
@@ -167,68 +167,105 @@ to-report p-platform-pathfind [start-node goal-node]
       let other-meta-pois other meta-pois
       ask other-meta-pois with [[p-platform] of [patch-here] of self = this-platform] [
         let out-pathables-to-this-meta-poi out-pathable-to this-meta-poi
-        ifelse out-pathable-to this-meta-poi = nobody [          
+        
+        
+        (ifelse this-patch = start-node [
           let from-to-path p-pathfind-straightened this-patch [patch-here] of self 
-          let normalized-from-to-path normalize-path from-to-path
-          let normalized-from-to-path-cost distance-path normalized-from-to-path
+          let path from-to-path 
+          ; set path normalize-path path
           
-          let to-from-path p-pathfind-straightened [patch-here] of self this-patch
-          let normalized-to-from-path normalize-path to-from-path
-          let normalized-to-from-path-cost distance-path normalized-to-from-path
-          ;          show (list p-platform-meta-poi p-platform-neighbor-node)
+          let path-cost distance-path path
+          
+          
           create-pathable-from this-meta-poi [ ; from this-meta-poi to other-meta-poi
-            set pathable-path normalized-from-to-path
-            set pathable-cost normalized-from-to-path-cost
+            set pathable-path path
+            set pathable-cost path-cost
             set color [0 255 255]
           ] 
-          create-pathable-to this-meta-poi [ ; from other-meta-poi to this-meta-poi
-            set pathable-path normalized-to-from-path
-            set pathable-cost normalized-to-from-path-cost
-            set color [0 255 255]
-          ]   
-        ]
-        [
-          ; Source and destination are on the same platform and already pathfound
-          ; print (list "soruce and destiantion on the same platform" start-node goal-node)
-        ]
+          ]
+          this-patch = goal-node [
+            let to-from-path p-pathfind-straightened [patch-here] of self this-patch
+            let path to-from-path 
+            
+            ; set path normalize-path to-from-path
+            
+            let path-cost distance-path path
+            create-pathable-to this-meta-poi [ ; from other-meta-poi to this-meta-poi
+              set pathable-path path
+              set pathable-cost path-cost
+              set color [0 255 255]
+            ] 
+          ]
+          [
+            error (word "Meta pathing " start-node "->" goal-node ": " this-patch " is not start or goal")
+          ]
+        )
+        ; ifelse out-pathable-to this-meta-poi = nobody [    
+        ;  ; Patches in different platforms
+        ;  if this-patch = start-node
+        ;  if this-patch
+        ;  let from-to-path p-pathfind-straightened this-patch [patch-here] of self 
+        ;  let normalized-from-to-path normalize-path from-to-path
+        ;  let normalized-from-to-path-cost distance-path normalized-from-to-path
+        ;  
+        ;  let to-from-path p-pathfind-straightened [patch-here] of self this-patch
+        ;  let normalized-to-from-path normalize-path to-from-path
+        ;  let normalized-to-from-path-cost distance-path normalized-to-from-path
+        ;  ;          show (list p-platform-meta-poi p-platform-neighbor-node)
+        ;  create-pathable-from this-meta-poi [ ; from this-meta-poi to other-meta-poi
+        ;    set pathable-path normalized-from-to-path
+        ;    set pathable-cost normalized-from-to-path-cost
+        ;    set color [0 255 255]
+        ;  ] 
+        ;  create-pathable-to this-meta-poi [ ; from other-meta-poi to this-meta-poi
+        ;    set pathable-path normalized-to-from-path
+        ;    set pathable-cost normalized-to-from-path-cost
+        ;    set color [0 255 255]
+        ;  ]   
+        ; ]
+        ; [
+        ;   ; Source and destination are on the same platform and already pathfound
+        ;   ; print (list "soruce and destiantion on the same platform" start-node goal-node)
+        ; ]
         
       ]
       
     ]
-    ]
-    
-    ask nodes [ 
-      set g-score infinity
-      set parent 0
-      set open-set fput self open-set
-    ]
-    
-    ask start-node [
-      set g-score 0
-    ]
-    
-    reset-show-paths ; DEBUG
-    
-    ; print (list "before running" map [ x -> (list x [g-score] of x) ] open-set)
-    ; RUNNING
+  ]
+  
+  ask nodes [ 
+    set g-score infinity
+    set parent 0
+    set open-set fput self open-set
+  ]
+  
+  ask start-node [
+    set g-score 0
+  ]
+  
+  reset-show-paths ; DEBUG
+  
+  ; print (list "before running" map [ x -> (list x [g-score] of x) ] open-set)
+  ; RUNNING
   let index -1
   while [not empty? open-set ] [
     set index index + 1
     let current-node first sort-by [[t1 t2] -> [g-score] of t1 < [g-score] of t2] open-set
     ask current-node [sprout-debugers 1 [set color black]] ; DEBUG
     
+    ; print (list "open-set" map [x -> (list x [g-score] of x)] sort-by [[x y] -> [g-score] of x < [g-score] of y] open-set)
     ; show (list "index" index "node" current-node)
     if current-node = goal-node [
       ; show "found"
       ; ask goal-node [        
-        ; show (list "goal-node says" parent g-score)      ] ;debug
+      ; show (list "goal-node says" parent g-score)      ] ;debug
       
       let meta-path backtrace-path start-node goal-node
       
       let composed-path []
       let meta-path-length length meta-path
       let meta-path-index 0
-        ; show (list "mounting found meta-path" )
+      ; show (list "mounting found meta-path" )
       repeat meta-path-length - 1  [
         let from-in-meta-path item meta-path-index meta-path
         let to-in-meta-path item ( meta-path-index + 1 ) meta-path
@@ -252,7 +289,6 @@ to-report p-platform-pathfind [start-node goal-node]
     ]
     
     set open-set (remove current-node open-set)
-    ; show (list "open-set" open-set)
     
     
     
@@ -268,7 +304,7 @@ to-report p-platform-pathfind [start-node goal-node]
             let pathable-edge in-pathable-from current-poi
             let edge-distance [pathable-cost] of pathable-edge
             let alt [g-score] of current-node + edge-distance
-            ;  show (list "edge-distance" edge-distance "alt" alt "pathable-edge" pathable-edge)
+            ; show (list current-node "->" x "edge-distance" edge-distance "alt" alt "pathable-edge" pathable-edge)
             if alt < g-score [
               set g-score alt
               set parent current-node
@@ -279,7 +315,7 @@ to-report p-platform-pathfind [start-node goal-node]
     ]
     
   ]
-;  show "empty"
+  ;  show "empty"
   report []
   
 end
