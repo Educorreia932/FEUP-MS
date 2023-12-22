@@ -34,7 +34,6 @@ to-report p-platform-neighbors [nodes]
   let neighbor-nodes 0
   ifelse p-is-portal? [
     let portal-node one-of portals-here
-    print" try"
     set neighbor-nodes other nodes with [
       p-platform = [p-platform] of myself
       or
@@ -170,7 +169,8 @@ to-report p-platform-pathfind [start-node goal-node]
         
         
         (ifelse this-patch = start-node [
-          let from-to-path p-pathfind-straightened this-patch [patch-here] of self 
+          ;let from-to-path p-pathfind-straightened this-patch [patch-here] of self 
+          let from-to-path passenger-merge-path-to-pathable this-patch self true
           let path from-to-path 
           ; set path normalize-path path
           
@@ -184,8 +184,10 @@ to-report p-platform-pathfind [start-node goal-node]
           ] 
           ]
           this-patch = goal-node [
-            let to-from-path p-pathfind-straightened [patch-here] of self this-patch
-            let path to-from-path 
+            
+            ;let to-from-path p-pathfind-straightened [patch-here] of self this-patch
+            let from-to-path passenger-merge-path-to-pathable this-patch self false
+            let path from-to-path
             
             ; set path normalize-path to-from-path
             
@@ -200,33 +202,6 @@ to-report p-platform-pathfind [start-node goal-node]
             error (word "Meta pathing " start-node "->" goal-node ": " this-patch " is not start or goal")
           ]
         )
-        ; ifelse out-pathable-to this-meta-poi = nobody [    
-        ;  ; Patches in different platforms
-        ;  if this-patch = start-node
-        ;  if this-patch
-        ;  let from-to-path p-pathfind-straightened this-patch [patch-here] of self 
-        ;  let normalized-from-to-path normalize-path from-to-path
-        ;  let normalized-from-to-path-cost distance-path normalized-from-to-path
-        ;  
-        ;  let to-from-path p-pathfind-straightened [patch-here] of self this-patch
-        ;  let normalized-to-from-path normalize-path to-from-path
-        ;  let normalized-to-from-path-cost distance-path normalized-to-from-path
-        ;  ;          show (list p-platform-meta-poi p-platform-neighbor-node)
-        ;  create-pathable-from this-meta-poi [ ; from this-meta-poi to other-meta-poi
-        ;    set pathable-path normalized-from-to-path
-        ;    set pathable-cost normalized-from-to-path-cost
-        ;    set color [0 255 255]
-        ;  ] 
-        ;  create-pathable-to this-meta-poi [ ; from other-meta-poi to this-meta-poi
-        ;    set pathable-path normalized-to-from-path
-        ;    set pathable-cost normalized-to-from-path-cost
-        ;    set color [0 255 255]
-        ;  ]   
-        ; ]
-        ; [
-        ;   ; Source and destination are on the same platform and already pathfound
-        ;   ; print (list "soruce and destiantion on the same platform" start-node goal-node)
-        ; ]
         
       ]
       
@@ -317,5 +292,118 @@ to-report p-platform-pathfind [start-node goal-node]
   ]
   ;  show "empty"
   report []
+  
+end
+
+
+to-report passenger-merge-path-to-pathable  [passenger-patch goal-turtle passenger-patch-is-start]
+  ; For faster performance only the 2nd (from the start or last) of the path is verified. 
+  ; For completeness, should check for straight paths  to the end of the path (either the last or the first)
+  ; Instead we just verify if the solution is better, if not then normal pathfinding to the goal should find a better solution in any case
+  ; Could just try to find a straight path to the checkpoint!
+  ; Is straight to 2nd? Continue
+  ; Is straight to 3rd? Continue
+  ; Is straight to 4th? No? 
+  ;    Pathfind to 4th: Is it better than 0 -> 3 -> 4 th? If so then keep. Else to 1 -> 3 -> 4
+  
+  if not [is-destiny] of passenger-patch [
+    error (word passenger-patch " should be in a destiny")  
+  ]
+  
+  let passenger-destination-turtle [p-destination] of passenger-patch
+  
+  let already-found-path 0
+  let checkpoint 0
+  let pivot 0
+  let aux-turtle 0
+  let tentative-patch 0
+  let worse-tentative-patch 0
+  
+  ask passenger-destination-turtle [
+    ifelse passenger-patch-is-start [
+      let link-already-found-path out-link-to goal-turtle
+      set already-found-path [f-path] of link-already-found-path
+      set checkpoint item 1 already-found-path ; second
+      set pivot passenger-patch
+      set tentative-patch checkpoint
+      set worse-tentative-patch [patch-here] of passenger-destination-turtle
+    ] 
+    [
+      let link-already-found-path in-link-from goal-turtle
+      set already-found-path [f-path] of link-already-found-path 
+      set checkpoint item (length already-found-path - 2) already-found-path ; penultimum
+      ;set pivot checkpoint
+      ;set tentative-patch passenger-patch
+      ;set worse-tentative-patch [patch-here] of passenger-destination-turtle
+      ;show (word "pivot" pivot "tentative-patch" tentative-patch "wrose-tentativepatch" worse-tentative-patch)
+      
+      set tentative-patch checkpoint
+      set worse-tentative-patch [patch-here] of passenger-destination-turtle
+      set pivot passenger-patch
+      
+      
+      
+    ]
+    
+  ]
+  
+  
+  ask tentative-patch [
+    sprout 1 [
+      hide-turtle
+      face worse-tentative-patch
+      set aux-turtle self
+    ] 
+  ]
+  let turtle-patch [patch-here] of aux-turtle
+  while [turtle-patch != worse-tentative-patch  ]
+  [
+    let is-a-straight-path 0
+    ifelse passenger-patch-is-start [
+          set is-a-straight-path is-straight-path-pos p-pos pivot p-pos turtle-patch
+    ][
+     set is-a-straight-path is-straight-path-pos p-pos turtle-patch p-pos pivot 
+    ]
+    if is-straight-path-pos p-pos pivot p-pos turtle-patch [
+    ; show (word "is staright from" pivot " to " turtle-patch "? yes")
+      let path already-found-path
+      ifelse passenger-patch-is-start [
+        set path replace-item 0 path passenger-patch
+        if turtle-patch != checkpoint [
+          set path insert-item 1 path turtle-patch
+        ]
+      ]
+      [
+        set path replace-item ( length path - 1 ) path passenger-patch
+        if turtle-patch != checkpoint [
+          set path insert-item (length path - 1 ) path turtle-patch
+        ] 
+      ]
+      ; done! 
+      ask aux-turtle[die]
+      ; show (word "Update path!")
+      report path
+    ]
+    ; show (word "is staright from" pivot " to " turtle-patch "? no")
+    while [[patch-here] of aux-turtle = turtle-patch] [
+      ask aux-turtle
+      [
+        forward straight-pathing-step
+      ]
+    ]
+    set turtle-patch [patch-here] of aux-turtle
+    
+  ]
+  
+  ; couldn't even find a straight path to the patch of the same destination
+  ; show (word "Couldn't find straight path from " passenger-patch " to " passenger-destination-turtle)
+  ifelse passenger-patch-is-start[
+    let path p-pathfind-straightened passenger-patch ( [patch-here] of goal-turtle)
+  ]
+  [
+    let path p-pathfind-straightened ( [patch-here] of goal-turtle) passenger-patch
+  ]
+  ask aux-turtle [die]
+  report 0
   
 end

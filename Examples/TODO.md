@@ -71,7 +71,7 @@ Pathing each tick
 add file to metadata
 
 
-To speed up the setup run massively!
+DONE To speed up the setup run massively!
     Get a passenger
     Get their train
         Get the findable from the train to everyplace else
@@ -82,7 +82,7 @@ To speed up the setup run massively!
     passenger path [passenger, intersection, probably first bend, second bend, ..., last bend, destination]
 
 
-To speed up the setup run
+DONE To speed up the setup run
     meta pathfidning source and origin only do outgoing and incoming pathables. (the others will never be treaversed anyway)
 
 To speed up and clean setup run
