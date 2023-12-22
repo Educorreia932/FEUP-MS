@@ -1,4 +1,4 @@
-xcor-init-pos,ycor-init-pos,floor-id-init-pos,platform-init-pos,floor-x-init-pos,floor-y-init-pos,floor-transition,xcor-final-pos,ycor-final-pos,floor-id-final-pos,platform--final-pos,floor-x-final-pos,floor-y-final-pos,heading,crowdness-0.8,crowdness-1,crowdness-1.2,crowdness-1.4
+who,tick,xcor-init-pos,ycor-init-pos,floor-id-init-pos,platform-init-pos,floor-x-init-pos,floor-y-init-pos,floor-transition,xcor-final-pos,ycor-final-pos,floor-id-final-pos,platform--final-pos,floor-x-final-pos,floor-y-final-pos,heading,crowdness-0.8,crowdness-1,crowdness-1.2,crowdness-1.4
 50202,0,43.10764286089609,4.488704674294409,1,1,11,3,none,43.10764286089609,4.488704674294409,1,1,11,3,171,0,0,0,0
 50202,0,43.04311123071319,4.195727424826234,1,1,11,3,none,43.04311123071319,4.195727424826234,1,1,11,3,192.42171295394826,0,0,0,0
 50202,1,42.9671335129377,4.4859469734469775,1,1,11,3,none,42.9671335129377,4.4859469734469775,1,1,11,3,345.3295493069619,0,0,0,0
