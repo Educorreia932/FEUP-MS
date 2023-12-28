@@ -21,7 +21,7 @@ to init-portals-pathfinding
         let p-a2-floor [tfloor-id] of self
         let floor-difference abs (p-a1-floor - p-a2-floor)
         set portal-cost floor-difference * elevator-cost-multiplier
-        show (list "is elevator" p-a1-floor p-a2-floor floor-difference portal-cost)
+        ; show (list "is elevator" p-a1-floor p-a2-floor floor-difference portal-cost)
       ]
       
       create-access-with p-a1 [
@@ -795,8 +795,8 @@ to-report _straighten-path [path]
     ifelse is-straight-path-pos (p-pos straight-source-patch) (p-pos straight-destination-patch) [
     ]
     [
-      let last-straight-patch item straight-prev-straight-index path
       set straight-source-index straight-prev-straight-index
+      let last-straight-patch item straight-prev-straight-index path
       set straight-path lput last-straight-patch straight-path
     ]
     set straight-prev-straight-index straight-destination-index
