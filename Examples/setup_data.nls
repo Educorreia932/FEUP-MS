@@ -261,8 +261,18 @@ to init-portals
 
 end
 
+; patch
+to-report p-poi-id
+  let poi-pts filter [i -> member? i PTS-DESTINY] pts
+  let poi-pt first poi-pts
+  let poi-index position poi-pt pts
+  let poi-id-to-report item poi-index pts-ids
+  report poi-id-to-report  
+end
+
+
 ; observer
-to init-lines
+to init-lines-from-train-line
   let train-line-id 0
   let non-instantiated-train-line min-one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts][p-index]
   while [non-instantiated-train-line != nobody] [
@@ -275,6 +285,169 @@ to init-lines
     set non-instantiated-train-line min-one-of patches with [pcolor = COLOR-TRAIN-LINE and not member? PT-TRAIN-LINE pts ][p-index]
     set train-line-id train-line-id + 1
   ]
+end
+
+
+; observer
+to init-spawners
+  ifelse any? patches with [pcolor = COLOR-TRAIN] [
+   ; We have a predetermined position for the trains 
+    init-lines
+  ]
+  [
+    init-lines-from-train-line
+  ]
+  
+  init-outsides
+end
+
+
+to init-lines
+  let pois-id count turtles with [tt = TT-POI]
+  let remaining-trains true
+  
+  while [remaining-trains] [
+    let non-instantiated-trains patches with [
+      pcolor = COLOR-TRAIN
+      and 
+      empty? filter [i -> member? i PTS-DESTINY] pts
+    ] 
+    ifelse any? non-instantiated-trains [
+      let non-instantiated-train min-one-of non-instantiated-trains [p-index]
+      ask non-instantiated-train [
+        set pts lput PT-TRAIN pts
+        set pts-ids lput pois-id pts-ids
+        flood-zone PT-TRAIN pois-id COLOR-TRAIN
+      ] 
+      init-train pois-id
+      set pois-id pois-id + 1
+    ]
+    [
+      set remaining-trains false 
+    ]
+  ]
+end
+
+to init-train [train-id-to-init]
+  let train-patches patches with [
+    not empty? filter [i -> member? i PTS-DESTINY] pts
+    and
+    p-poi-id = train-id-to-init
+  ]
+  let centroid-train get-centroid train-patches
+  
+  ask centroid-train  [
+    let main-train sprout-train
+    ask train-patches [
+      sprout-train-cells 1 [
+        set color red
+        set shape "circle"
+        set belong-to-train main-train
+        hide-turtle
+      ] 
+    ]
+  ]
+  
+end
+
+;patch 
+to-report sprout-train 
+  let sprouted-train-poi 0
+  let train-poi-id p-poi-id
+  sprout-trains 1 [
+    ; train-pio
+    set direction-vector 0
+    set is-a-poi true
+    
+    set color [133 133 133]
+    set tfloor-id pfloor-id
+    set tfloor-x pfloor-x
+    set tfloor-y pfloor-y
+    set tt TT-POI
+    set tt-id train-poi-id
+    
+    set poi-paths []
+    set init-poi-paths false
+  ]
+  
+  report sprouted-train-poi
+end
+
+; patch
+to-report sprout-outside
+  let sprouted-outside-poi 0
+  let outside-poi-id p-poi-id
+  sprout-outsides 1 [
+    ; outside-poi
+    set is-a-poi true
+
+    ; turtle
+    set color [133 133 133]
+    set shape "house"
+
+    set tfloor-id pfloor-id
+    set tfloor-x pfloor-x
+    set tfloor-y pfloor-y
+    set tt TT-POI
+    set tt-id p-poi-id
+
+    set poi-paths []
+    set init-poi-paths false
+
+    set sprouted-outside-poi self
+  ]
+
+  report sprouted-outside-poi
+end
+
+
+to init-outside [outside-id-to-init]
+  let outside-patches patches with [
+    not empty? filter [i -> member? i PTS-DESTINY] pts
+    and
+    p-poi-id = outside-id-to-init
+  ]
+  let centroid-outside get-centroid outside-patches
+  
+  ask centroid-outside [
+    let main-outside sprout-outside
+    ask outside-patches [
+      sprout-outside-cells 1 [
+        set color red
+        set belong-to-outside main-outside
+        hide-turtle
+      ]
+    ]
+  ]
+end
+
+to init-outsides
+  let pois-id count turtles with [tt = TT-POI]
+  let remaining-outsides true
+  while [remaining-outsides] [
+    let non-instantiated-outsides patches with [
+      pcolor = COLOR-OUTSIDE
+      and
+      empty? filter [i -> member? i PTS-DESTINY] pts
+    ]
+    
+    ifelse any? non-instantiated-outsides [
+      let non-instantiated-outside min-one-of non-instantiated-outsides [p-index]
+      ask non-instantiated-outside [
+        set pts lput PT-OUTSIDE pts
+        set pts-ids lput pois-id pts-ids
+        flood-zone PT-OUTSIDE pois-id COLOR-OUTSIDE
+      ]
+      init-outside pois-id
+      set pois-id pois-id + 1
+    ]
+    [
+      set remaining-outsides false
+    
+    ]
+  ]
+
+  
 end
 
 ; patch
@@ -374,13 +547,12 @@ to init-rail
         let carriage-direction-vector rotate-vector-clock direction
         let carriage-head get-last checking-ground PT-TRAIN-LINE carriage-direction-vector
         ask carriage-head [
-          init-train carriage-direction-vector
+          init-train-from-vector carriage-direction-vector
         ]
       ]
       stop
     ]
   ]
-
 end
 
 ;patch
@@ -396,7 +568,7 @@ to-report p-train-line
 end
 
 ; patch
-to-report sprout-train [heading-vector]
+to-report sprout-train-from-vector [heading-vector]
   let sprouted-train ""
   let train-id p-train-line
   sprout-trains 1 [
@@ -419,8 +591,8 @@ to-report sprout-train [heading-vector]
   report sprouted-train
 end
 
-to init-train [heading-vector]
-  let inited-train sprout-train heading-vector
+to init-train-from-vector [heading-vector]
+  let inited-train sprout-train-from-vector heading-vector
 
   let train-id [p-train-line] of [patch-here] of inited-train
   let heading_x item 0 heading-vector
@@ -467,6 +639,7 @@ to init-train [heading-vector]
     set length-index length-index + 1
   ]
 end
+ 
 
 
 to setup-data
@@ -475,6 +648,7 @@ to setup-data
   init-platforms
   init-grounds
   init-portals
-  init-lines
+  init-spawners
+  ; init-lines
   init-path-finding
 end

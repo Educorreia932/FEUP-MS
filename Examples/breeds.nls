@@ -2,6 +2,8 @@
 breed [passengers passenger]
 breed [trains train]
 breed [train-cells train-cell]
+breed [outsides outside]
+breed [outside-cells outside-cell]
 breed [portals portal]
 breed [portal-cells portal-cell]
 breed [platformers platformer]
@@ -17,6 +19,8 @@ passengers-own [source-patch source destination destination-patch spawned
 ]
 trains-own [is-a-poi direction-vector]
 train-cells-own [belong-to-train]
+outsides-own [is-a-poi]
+outside-cells-own [belong-to-outside]
 portals-own [portal-id portal-connect-ids]
 portal-cells-own [portal-id belong-to-portal]
 platformers-own [p-p-id]
@@ -34,9 +38,9 @@ patches-own [
 ]
 
 ;; links
-undirected-link-breed [findables findable]
+directed-link-breed [findables findable]
 undirected-link-breed [accesses access]
-undirected-link-breed [pathables pathable]
+directed-link-breed [pathables pathable]
 
 findables-own [f1 f2 f-path f-cost f-p-id ]
 accesses-own [a1 a2 p-cost]

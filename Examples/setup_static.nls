@@ -1,6 +1,7 @@
 extensions [bitmap]
 
 globals [
+  DEBUG
   ; CONFIG CONSTANTS
   FILE
   FLOORS
@@ -11,7 +12,8 @@ globals [
   PLATFORMS
 
   ; PROGRAMMNG CONSTANTS
-  TIME-MONTHS TIME-PM-STR
+  TIME-MONTHS TIME-PM-STR 
+  TIME-MONTH-STR-SIZE
   
   ; CONSTANTS
   ; trains
@@ -24,12 +26,14 @@ globals [
   straight-pathing-step
   
   ;patch colors
-  COLOR-TRAIN-LINE COLOR-GROUND COLOR-WALL COLOR-BOUNDARY COLOR-STAIR COLOR-ELEVATOR
+  COLOR-OUTSIDE COLOR-TRAIN-LINE COLOR-TRAIN
+  COLOR-GROUND COLOR-WALL COLOR-BOUNDARY 
+  COLOR-STAIR COLOR-ELEVATOR
   COLOR-UPWARDS-ESCALATOR-ENTRY COLOR-UPWARDS-ESCALATOR COLOR-UPWARDS-ESCALATOR-EXIT
   COLOR-DOWNWARDS-ESCALATOR-ENTRY COLOR-DOWNWARDS-ESCALATOR COLOR-DOWNWARDS-ESCALATOR-EXIT
   PCS-PLATFORM PCS-PORTAL
   ;patch type pt
-  PT-TRAIN-LINE PT-TRAIN PT-PLATFORM PT-GROUND PT-WALL PT-BOUNDARY PT-STAIR PT-ELEVATOR 
+  PT-OUTSIDE PT-TRAIN-LINE PT-TRAIN PT-PLATFORM PT-GROUND PT-WALL PT-BOUNDARY PT-STAIR PT-ELEVATOR 
   PT-UP-ESC-ENTRY PT-UP-ESC PT-UP-ESC-EXIT PT-DOWN-ESC-ENTRY PT-DOWN-ESC PT-DOWN-ESC-EXIT
   PTS-PATHABLE PTS-ALWAYS-PATHABLE PTS-DESTINY PTS-PORTAL
   
@@ -44,7 +48,9 @@ globals [
   init-data tick-data end-data 
   
 ]
-
+to setup-debug
+  set DEBUG false
+end
 
 to setup-configs
   ;  set FILE "assets/small_station.png"
@@ -52,16 +58,32 @@ to setup-configs
   ;  set FILE "assets/4_platforms_3_floors_station_elevators.png"
   ; set FILE "assets/turtle_pathfinding_2.png"
   set FILE "assets/2_floors_station_escalators.png"
-  set FLOORS 2
+  set FILE "assets/2_floors_station_escalators_entry_exit.png"
+;  set FILE "assets/2_floors_station_predetermined_trains.png"
+  set FILE "assets/trindade.png"
+  set FLOORS 3
   set LOG-DATA true
   set LOG-FOLDER "experiments/"
 end
 
 to setup-programming-constants
-  set TIME-MONTHS ["jan" "fev" "mar" "abr" "mai" "jun" "jul" "ago" "set" "out" "nov" "dez"]
-  set TIME-PM-STR "da tarde"
+  let time-str date-and-time
+  let am-in-string member? "AM" time-str
+  let pm-in-string member? "PM" time-str
+  
+  let is-english-lang ( am-in-string or pm-in-string)
+  
+  ifelse is-english-lang[
+    set TIME-MONTHS ["jan" "feb" "mar" "apr" "may" "jun" "jul" "aug" "sep" "oct" "nov" "dec"] 
+      set TIME-PM-STR "PM"
+      set TIME-MONTH-STR-SIZE 3
+    ]
+    [
+      set TIME-MONTHS ["jan" "fev" "mar" "abr" "mai" "jun" "jul" "ago" "set" "out" "nov" "dez"]
+      set TIME-PM-STR "da tarde"
+      set TIME-MONTH-STR-SIZE 4
+    ]
 end
-
 
 to setup-constants
 
@@ -73,16 +95,16 @@ to setup-constants
   set escalator-pathing-multiplier 9 ; bigger is better
   set escalator-speed-multiplier 3
   
-  set turtle-radius 0.3
+  set turtle-radius 0.45
   set turtle-shape "person"
   set turtle-size 0.5
   set straight-pathing-step 0.3
   
   set LOG-CROWDNESS-RADII [] ; In setup_run
   
-  
+  set COLOR-OUTSIDE [255 0 0]
   set COLOR-TRAIN-LINE [0 0 255]
-  ;  set COLOR-TRAIN-LINE [0 255 0]
+  set COLOR-TRAIN [0 255 255]
   set COLOR-GROUND [255 255 255]
   set COLOR-WALL [0 0 0]
   set COLOR-BOUNDARY [245 0 255]
@@ -98,12 +120,15 @@ to setup-constants
   
   
   set PCS-PLATFORM (list
-    COLOR-GROUND COLOR-TRAIN-LINE COLOR-STAIR COLOR-ELEVATOR 
+    COLOR-OUTSIDE COLOR-TRAIN-LINE COLOR-TRAIN
+    COLOR-GROUND 
+    COLOR-STAIR COLOR-ELEVATOR 
     COLOR-UPWARDS-ESCALATOR-ENTRY COLOR-UPWARDS-ESCALATOR COLOR-UPWARDS-ESCALATOR-EXIT
     COLOR-DOWNWARDS-ESCALATOR-ENTRY COLOR-DOWNWARDS-ESCALATOR COLOR-DOWNWARDS-ESCALATOR-EXIT  
   )
   set PCS-PORTAL (list COLOR-STAIR COLOR-ELEVATOR)
   
+  set PT-OUTSIDE "OUTSIDE"
   set PT-TRAIN-LINE "TRAIN_LINE"
   set PT-TRAIN "TRAIN"
   set PT-PLATFORM "PLATFORM"
@@ -119,11 +144,11 @@ to setup-constants
   set PT-DOWN-ESC "DE"
   set PT-DOWN-ESC-EXIT "DEEX"
   
-  set PTS-PATHABLE (list PT-GROUND PT-TRAIN PT-STAIR PT-ELEVATOR
+  set PTS-PATHABLE (list PT-OUTSIDE PT-TRAIN PT-GROUND PT-STAIR PT-ELEVATOR
     PT-UP-ESC-ENTRY PT-UP-ESC PT-UP-ESC-EXIT PT-DOWN-ESC-ENTRY PT-DOWN-ESC PT-DOWN-ESC-EXIT 
   )
-  set PTS-ALWAYS-PATHABLE (list PT-GROUND PT-TRAIN PT-STAIR PT-ELEVATOR)
-  set PTS-DESTINY (list PT-TRAIN)
+  set PTS-ALWAYS-PATHABLE (list PT-OUTSIDE PT-TRAIN PT-GROUND PT-STAIR PT-ELEVATOR)
+  set PTS-DESTINY (list PT-TRAIN PT-OUTSIDE)
   set PTS-PORTAL (list PT-STAIR PT-ELEVATOR)
   
   set TT-POI "POI"
@@ -134,7 +159,9 @@ to setup-constants
   set TTS-PORTAL (list TT-STAIR TT-ELEVATOR)
   
   set INFINITY 999999
-  
+end
+
+to setup-world-logs
   set init-data []
   set tick-data []
   set end-data []
@@ -143,15 +170,18 @@ end
 to load
   let img bitmap:import FILE
   resize-world 0 (bitmap:width img - 1) 0 (bitmap:height img - 1)
+  
   set floor-width (world-width - FLOORS - 1 ) / FLOORS
   set floor-height world-height - 2 ; top and bottom edges
-  print (list "height" floor-height "width" floor-width)
+  print (list "Image:" world-height "x" world-width "=>" "floor height" floor-height "floor-width" floor-width )
   bitmap:copy-to-pcolors img false
 end
 
 to setup-static
+  setup-debug
   setup-configs
   setup-programming-constants
   setup-constants
+  setup-world-logs
   load
 end

@@ -6,7 +6,6 @@ to-report format-io-date [_date-and-time]
   report formated_time
 end
 
-
 to-report get-datetime [_date-and-time]
   let year-month-day date-and-time-get-date _date-and-time
   let hours-minutes-seconds-milli date-and-time-get-time _date-and-time
@@ -22,14 +21,16 @@ to-report get-datetime [_date-and-time]
   let t-datetime time:create time-str
   report t-datetime
 end
-
+ 
 to-report date-and-time-get-date [_date-and-time]
   let _length length _date-and-time
   let year substring _date-and-time ( _length - 4) _length
-  let day substring _date-and-time ( _length - 12) ( _length - 12 + 2)
-  let month_string substring date-and-time ( _length - 9) (_length - 9 + 3)
   
+  let month-string-start-index _length - 4 - 1 - TIME-MONTH-STR-SIZE
+  let month_string substring date-and-time ( month-string-start-index) ( month-string-start-index + 3)
+  let day substring _date-and-time ( month-string-start-index - 3) ( month-string-start-index - 3 + 2)
   let month_index position month_string TIME-MONTHS
+  
   if month_index = false [
     error (word "Could not parse month in date-and-time string. Month:" month_string)
   ]

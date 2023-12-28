@@ -88,10 +88,10 @@ NIL
 BUTTON
 474
 53
-551
+579
 86
-init-lines
-init-lines
+init-spawners
+init-spawners
 NIL
 1
 T

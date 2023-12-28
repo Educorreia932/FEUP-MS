@@ -1,7 +1,8 @@
 ; observer
 to init-path-finding
   init-portals-pathfinding
-  init-floors-pathfinding-better
+  init-floors-pathfinding
+  print "Finished pathfinding"
 end
 
 ; observer
@@ -20,7 +21,7 @@ to init-portals-pathfinding
         let p-a2-floor [tfloor-id] of self
         let floor-difference abs (p-a1-floor - p-a2-floor)
         set portal-cost floor-difference * elevator-cost-multiplier
-        show (list "is elevator" p-a1-floor p-a2-floor floor-difference portal-cost)
+        ; show (list "is elevator" p-a1-floor p-a2-floor floor-difference portal-cost)
       ]
       
       create-access-with p-a1 [
@@ -41,71 +42,60 @@ to init-floors-pathfinding
   repeat PLATFORMS [
     let path-found-turtles []
     let poi-turtles turtles with [member? tt TTS-PATHABLE and t-platform = platforms-index]
-    let poi-turtles-with-no-paths poi-turtles with [init-poi-paths = false]
-    while [count poi-turtles-with-no-paths > 0 ][ 
-      ask one-of poi-turtles-with-no-paths[
-        let left-to-pathfind-to [self] of other poi-turtles-with-no-paths
-        let index 0
-        foreach left-to-pathfind-to [
-          let goal item index left-to-pathfind-to
-          let path pathfind-straigthened goal
-          ; let normalized-path normalize-path path
-          let normalized-path path
-          let normalized-path-cost distance-path normalized-path
-          set poi-paths lput path poi-paths
-          create-findable-with goal [
-            set f1 myself
-            set f2 goal
-            set f-path normalized-path
-            set f-cost normalized-path-cost
-            set f-p-id platforms-index
-            set color green
-          ]
-          
-          set index index + 1
+    ask poi-turtles [
+      let to-turtle self
+      ask other poi-turtles [
+        let from-turtle self
+        let path pathfind-straigthened to-turtle
+        let path-cost distance-path path
+        create-findable-to to-turtle [
+          set f1 from-turtle
+          set f2 to-turtle
+          set f-path path
+          set f-cost path-cost
+          set f-p-id platforms-index
+          set color green
         ]
-        set init-poi-paths true
-      ]
-      set poi-turtles-with-no-paths poi-turtles with [init-poi-paths = false]
+      ] 
     ]
     set platforms-index platforms-index + 1
   ]
 end
 
 ; observer
-to init-floors-pathfinding-better
-  let platforms-index 0
-  repeat PLATFORMS [
-    let path-found-turtles []
-    let poi-turtles turtles with [member? tt TTS-PATHABLE and t-platform = platforms-index]
-    let n count poi-turtles
-    ask poi-turtles [
-      let from-turtle self
-      ask other poi-turtles [
-        let to-turtle self
-        if not findable-neighbor? from-turtle [
-          
-          create-findable-with from-turtle [
-            let path []
-            ask from-turtle [
-              set path pathfind-straigthened to-turtle
-            ]
-            let path-cost distance-path path
-            set f1 to-turtle
-            set f2 from-turtle
-            set f-path path
-            set f-cost path-cost
-            set f-p-id platforms-index
-            
-          ] 
-        ]
-      ] 
-    ]
-    set platforms-index platforms-index + 1
-  ]
-  ;  ask findables [hide-link]
-  
-end
+; to init-floors-pathfinding-better
+;   let platforms-index 0
+;   repeat PLATFORMS [
+;     let path-found-turtles []
+;     let poi-turtles turtles with [member? tt TTS-PATHABLE and t-platform = platforms-index]
+;     let n count poi-turtles
+;     ask poi-turtles [
+;       let from-turtle self
+;       ask other poi-turtles [
+;         let to-turtle self
+;         if not findable-neighbor? from-turtle [
+;           
+;           create-findable-with from-turtle [
+;             let path []
+;             ask from-turtle [
+;               set path pathfind-straigthened to-turtle
+;             ]
+;             let path-cost distance-path path
+;             set f1 to-turtle
+;             set f2 from-turtle
+;             set f-path path
+;             set f-cost path-cost
+;             set f-p-id platforms-index
+;             
+;           ] 
+;         ]
+;       ] 
+;     ]
+;     set platforms-index platforms-index + 1
+;   ]
+;   ;  ask findables [hide-link]
+;   
+; end
 
 
 
@@ -194,7 +184,7 @@ to-report is-pathable-from [p-from]
       or
       is-up-esc-entry
         or
-        is-down-esc-entry
+      is-down-esc-entry
       )
       [report true] [report false]
       
@@ -303,8 +293,11 @@ end
 
 ; observer
 to-report p-pathfind [start-vertex goal-vertex]
-  show (list "pathfind start" "goal vertex" goal-vertex)
-  ask patches with [is-pathable] [
+  ; show (list "pathfind start" "goal vertex" goal-vertex)
+  if [p-platform] of start-vertex != [p-platform] of goal-vertex [
+    show (list "pathfinding patches in different platforms. start:" start-vertex " in " [p-platform] of start-vertex " to end: " goal-vertex " in" [p-platform] of goal-vertex)
+  ]
+  ask patches with [is-pathable and p-platform = [p-platform] of start-vertex] [
     set g-score infinity
     set h-score h-distance goal-vertex
     set f-score (g-score + h-score)
@@ -321,7 +314,9 @@ to-report p-pathfind [start-vertex goal-vertex]
   while [length open-set > 0 ] [
     let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
     
-    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+    if DEBUG [
+      ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+    ]
     
     if current-vertex = goal-vertex [ ; Goal reached
       let path backtrace-path start-vertex goal-vertex
@@ -329,26 +324,20 @@ to-report p-pathfind [start-vertex goal-vertex]
     ]
     
     set open-set (remove current-vertex open-set)
-    set closed-set lput current-vertex closed-set
+    set closed-set lput current-vertex closed-set 
     
     ask current-vertex [
       let neighbors-that-are-pathable neighbors4 with [
         is-pathable-from current-vertex
-        and 
-        is-straight-path-pos (list [pxcor] of current-vertex [pycor] of current-vertex) (list pxcor pycor)]
-      ;      ask pathable-neighbors
-      ;print (list "pathable neighbors are" neighbors-that-are-pathable)
-      ask neighbors with [
-        is-pathable-from current-vertex
-        and 
-        is-straight-path-pos (list [pxcor] of current-vertex [pycor] of current-vertex) (list pxcor pycor)
-      ]; BUG for some reason it's not working with the variable?
+        ; and 
+        ; is-straight-path-pos (list [pxcor] of current-vertex [pycor] of current-vertex) (list pxcor pycor)
+      ]
+      ask neighbors-that-are-pathable
       [
         if not member? self closed-set [
           let cost distance current-vertex
           if ([is-up-esc] of current-vertex or [is-down-esc] of current-vertex)
           [ 
-            show "ESCALATORS ARE GOOD, LET'S TAKE THEM"
             set cost cost / escalator-pathing-multiplier
           ]
           let tentative-g [g-score] of current-vertex + distance current-vertex 
@@ -806,8 +795,8 @@ to-report _straighten-path [path]
     ifelse is-straight-path-pos (p-pos straight-source-patch) (p-pos straight-destination-patch) [
     ]
     [
-      let last-straight-patch item straight-prev-straight-index path
       set straight-source-index straight-prev-straight-index
+      let last-straight-patch item straight-prev-straight-index path
       set straight-path lput last-straight-patch straight-path
     ]
     set straight-prev-straight-index straight-destination-index

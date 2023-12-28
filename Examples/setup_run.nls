@@ -58,17 +58,19 @@ to setup-run
   setup-run-constants
   setup-spawning
   ask links [hide-link]
+  clear-drawing
+  reset-ticks
   
   log-setup-run
   
-  clear-drawing
-  reset-ticks
+  print "Finished setting up the run"
 
 end
 
 ; observer
 to init-runnables 
   ask train-cells [hide-turtle]
+  ask outside-cells [hide-turtle]
   ; ask trains [hide-turtle]
   ask passengers [die]
 end
@@ -105,7 +107,7 @@ to-report sprout-passenger
       sprout-passengers 1 [
         set size turtle-size
         set shape turtle-shape
-        set color [100 255 255]
+        set color [128 0 128]
         setxy pass-x pass-y
         
         set spawned true
@@ -129,7 +131,9 @@ end
 to route-passenger 
   let pass-source source
   let all-train-destinations trains
-  let all-destinations ( turtle-set  all-train-destinations)
+  let all-outside-destinations outsides
+  
+  let all-destinations ( turtle-set  all-train-destinations all-outside-destinations)
   let other-destinations all-destinations with [
     self != pass-source
   ]
@@ -147,11 +151,19 @@ to-report p-destination
   if not is-destiny [
     report 0
   ]
-  if p-destiny = PT-TRAIN [
-    let id p-train-line 
-    let destiny-trains trains with [tt-id = id]
-    report one-of destiny-trains
-  ]
+  let id p-poi-id
+  (
+    
+    ifelse p-destiny = PT-TRAIN [
+      let destiny-trains trains with [tt-id = id]
+      report one-of destiny-trains
+    ]
+    p-destiny = PT-OUTSIDE [
+      let destiny-outsides outsides with [tt-id = id]
+      report one-of destiny-outsides
+      
+    ]
+  )
   report 0
   
 end
@@ -183,6 +195,7 @@ to path-passenger
   ;  show "leaving path-pasenger META PATH IS BAD"
 end
 
+; observer
 to log-setup-run
   if LOG-DATA [
     ask passengers[
@@ -192,8 +205,9 @@ to log-setup-run
       let destination-pos pos-info (list [pxcor] of [patch-here] of destination [pycor] of [patch-here] of destination)
       let data (list pos source source-pos destination destination-pos destination-patch-pos passenger-meta-path)
       set p-init-data data
+      log-passenger-tick ; register tick 0
     ]
-    
+
     set init-data (list FLOORS floor-height floor-width platforms count passengers count trains count portals)
   ]
 end
