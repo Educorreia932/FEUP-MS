@@ -9,12 +9,11 @@ def calculate_time_to_find_path(file_content):
         passenger_info_set = file_content[i:i+3]
         passenger_info_list.append(passenger_info_set)
 
-    
+if __name__ == '__main__':
+    # Read the file
+    file_path = 'Examples/experiments/2023_12_08_22_34_01.txt'
+    with open(file_path, 'r') as file:
+        file_content = file.readlines()
 
-# Read the file
-file_path = '/Users/user/Desktop/UNI/MS/Projeto/Examples/experiments/2023_12_08_22_34_01.txt'
-with open(file_path, 'r') as file:
-    file_content = file.readlines()
-
-# Call the function to calculate time to find the right path
-calculate_time_to_find_path(file_content)
+    # Call the function to calculate time to find the right path
+    calculate_time_to_find_path(file_content)
