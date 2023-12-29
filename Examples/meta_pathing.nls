@@ -89,7 +89,11 @@ end
 ; TODO test
 to-report p-platform-pathfind [start-node goal-node]
   reset-show-paths
-  
+  if [p-platform] of start-node = [p-platform] of goal-node [
+    let path p-pathfind-straightened start-node goal-node
+    let meta-path (list path)
+    report meta-path
+  ]
   ; SETUP
   reset-p-platform-pathfind
   let open-set []
@@ -168,12 +172,13 @@ to-report p-platform-pathfind [start-node goal-node]
         let out-pathables-to-this-meta-poi out-pathable-to this-meta-poi
         
         
+        let goal-turtle one-of [portals-here] of self
+          
         (ifelse this-patch = start-node [
           ;let from-to-path p-pathfind-straightened this-patch [patch-here] of self 
-          let from-to-path passenger-merge-path-to-pathable this-patch self true
+          let from-to-path passenger-merge-path-to-pathable this-patch goal-turtle true
           let path from-to-path 
           ; set path normalize-path path
-          
           let path-cost distance-path path
           
           
@@ -186,11 +191,10 @@ to-report p-platform-pathfind [start-node goal-node]
           this-patch = goal-node [
             
             ;let to-from-path p-pathfind-straightened [patch-here] of self this-patch
-            let from-to-path passenger-merge-path-to-pathable this-patch self false
+            let from-to-path passenger-merge-path-to-pathable this-patch goal-turtle false
             let path from-to-path
             
             ; set path normalize-path to-from-path
-            
             let path-cost distance-path path
             create-pathable-to this-meta-poi [ ; from other-meta-poi to this-meta-poi
               set pathable-path path
@@ -297,6 +301,7 @@ end
 
 
 to-report passenger-merge-path-to-pathable  [passenger-patch goal-turtle passenger-patch-is-start]
+  
   ; For faster performance only the 2nd (from the start or last) of the path is verified. 
   ; For completeness, should check for straight paths  to the end of the path (either the last or the first)
   ; Instead we just verify if the solution is better, if not then normal pathfinding to the goal should find a better solution in any case
@@ -305,7 +310,6 @@ to-report passenger-merge-path-to-pathable  [passenger-patch goal-turtle passeng
   ; Is straight to 3rd? Continue
   ; Is straight to 4th? No? 
   ;    Pathfind to 4th: Is it better than 0 -> 3 -> 4 th? If so then keep. Else to 1 -> 3 -> 4
-  
   if not [is-destiny] of passenger-patch [
     error (word passenger-patch " should be in a destiny")  
   ]
@@ -321,7 +325,7 @@ to-report passenger-merge-path-to-pathable  [passenger-patch goal-turtle passeng
   
   ask passenger-destination-turtle [
     ifelse passenger-patch-is-start [
-      let link-already-found-path out-link-to goal-turtle
+      let link-already-found-path out-findable-to goal-turtle
       set already-found-path [f-path] of link-already-found-path
       set checkpoint item 1 already-found-path ; second
       set pivot passenger-patch
@@ -329,7 +333,7 @@ to-report passenger-merge-path-to-pathable  [passenger-patch goal-turtle passeng
       set worse-tentative-patch [patch-here] of passenger-destination-turtle
     ] 
     [
-      let link-already-found-path in-link-from goal-turtle
+      let link-already-found-path in-findable-from goal-turtle
       set already-found-path [f-path] of link-already-found-path 
       set checkpoint item (length already-found-path - 2) already-found-path ; penultimum
       ;set pivot checkpoint
@@ -397,13 +401,14 @@ to-report passenger-merge-path-to-pathable  [passenger-patch goal-turtle passeng
   
   ; couldn't even find a straight path to the patch of the same destination
   ; show (word "Couldn't find straight path from " passenger-patch " to " passenger-destination-turtle)
+  let path 0
   ifelse passenger-patch-is-start[
-    let path p-pathfind-straightened passenger-patch ( [patch-here] of goal-turtle)
+    set path p-pathfind-straightened passenger-patch ( [patch-here] of goal-turtle)
   ]
   [
-    let path p-pathfind-straightened ( [patch-here] of goal-turtle) passenger-patch
+    set path p-pathfind-straightened ( [patch-here] of goal-turtle) passenger-patch
   ]
   ask aux-turtle [die]
-  report 0
+  report path
   
 end
