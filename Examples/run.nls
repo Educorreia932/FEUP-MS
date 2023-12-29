@@ -369,7 +369,7 @@ to-report pos-info [pos]
   report (list abs-x abs-y floor-id platform floor-x floor-y)
 end
 
-; passenger
+; passenger 
 to log-passenger-tick
   let biggest-radius-multiplier last LOG-CROWDNESS-RADII 
   let biggest-radius biggest-radius-multiplier * true-collision-radius
@@ -388,7 +388,7 @@ to log-passenger-tick
   ]
   set crowdnesses lput count passengers-in-biggest-radius crowdnesses
   
-  let data (list who ( ticks + 1 ) (list pos-info (list xcor ycor) "none" pos-info (list xcor ycor)) heading crowdnesses)
+  let data (list who ticks (list pos-info (list xcor ycor) "none" pos-info (list xcor ycor)) heading crowdnesses)
   set p-tick-data lput data p-tick-data
 end
 to log-passengers-tick
