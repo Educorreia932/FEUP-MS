@@ -61,7 +61,8 @@ to setup-run
   clear-drawing
   reset-ticks
   
-  log-setup-run
+  log-setup-run 
+  tick
   
   print "Finished setting up the run"
 
