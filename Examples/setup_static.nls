@@ -97,7 +97,7 @@ to setup-constants
   
   set turtle-radius 0.45
   set turtle-shape "person"
-  set turtle-size 0.5
+  set turtle-size 1  ; visualization only
   set straight-pathing-step 0.3
   
   set LOG-CROWDNESS-RADII [] ; In setup_run
