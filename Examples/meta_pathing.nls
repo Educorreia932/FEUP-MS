@@ -412,3 +412,7 @@ to-report passenger-merge-path-to-pathable  [passenger-patch goal-turtle passeng
   report path
   
 end
+
+to-report distance-meta-path [meta-path]
+  report sum ( map [x -> distance-path x] meta-path )
+end
