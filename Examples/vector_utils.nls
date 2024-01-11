@@ -108,6 +108,7 @@ to-report subtract-magnitude-from-vector [vector magnitude]
 end
 
 to-report repel-vector [particle-vector]
+  ; Lennard-Jones model
   let particle-distance distance-vector particle-vector
 ;  let force-magnitude 4 * collision-epsilon * ( (collision-sigma / particle-distance) ^ 12 - (collision-sigma / particle-distance) ^ 6 )
    let force-magnitude collision-sigma - particle-distance
