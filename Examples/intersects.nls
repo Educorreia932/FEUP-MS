@@ -1,0 +1,72 @@
+
+
+to-report does-intersect-turtle-pos-around [t-pos]
+  let x item 0 t-pos
+  let y item 1 t-pos
+  
+  let p patch x y
+  
+  let possible-intersects-neighbors [neighbors] of p
+  let possible-intersects-patches [self] of possible-intersects-neighbors
+  set possible-intersects-patches lput p possible-intersects-patches
+;  show (list "possible-neighbors" possible-intersects-neighbors "all-possible-intersects" possible-intersects-patches)
+  foreach possible-intersects-patches [
+    pip ->
+;    show (list "intersecting" t-pos "with" pip "(rad" turtle-radius ")")
+    if does-intersect-turtle-pos-patch t-pos pip [
+      report true 
+      
+    ] 
+  ]
+  report false
+  
+  
+end
+
+; observer
+to-report does-intersect-turtle-pos-patch [t-pos p]
+  ; See if intersects with walls (or otherwise places where no passenger can be at)
+  if [is-pathable] of p [
+    report false 
+  ]
+  
+  let t-x item 0 t-pos
+  let t-y item 1 t-pos
+  let p-x [pxcor] of p
+  let p-y [pycor] of p
+  let d-x abs ( t-x - p-x)
+  let d-y abs ( t-y - p-y)
+  
+  let closest-x clamp d-x -0.5 0.5
+  let closest-y clamp d-y -0.5 0.5
+  
+  let intersect-distance sqrt( (d-x - closest-x) ^ 2 + (d-y - closest-y) ^ 2)
+  let does-intersect intersect-distance <= turtle-radius
+;  show (list "d-x" d-x "d-y" d-y "closest-x" closest-x "closest-y" closest-y "int-distance" intersect-distance)
+;  show (list "does it intersect" does-intersect)
+  report does-intersect
+end
+
+to-report clamp [value minimum maximum]
+  let max-value min list maximum value
+  let max-min-value max list max-value minimum
+  report max-min-value
+end
+
+
+to-report get-turtle-pos-patch-closest-vector [t-pos p]
+  let t-x item 0 t-pos
+  let t-y item 1 t-pos
+  let p-x [pxcor] of p
+  let p-y [pycor] of p
+  let d-x abs  t-x - p-x
+  let d-y abs  t-y - p-y
+  
+  let closest-x clamp d-x -0.5 0.5
+  let closest-y clamp d-y -0.5 0.5
+  
+  let vector-x d-x - closest-x
+  let vector-y d-y - closest-y
+  
+  report (list vector-x vector-y)
+end

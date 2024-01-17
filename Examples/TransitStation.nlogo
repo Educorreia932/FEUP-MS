@@ -1,71 +1,33 @@
-globals [num-clusters]
-turtles-own [time-since-last-found]
+__includes ["vector_utils.nls" "setup_data.nls" "setup_static.nls" "pathing.nls" "breeds.nls" "intersects.nls" "setup_run.nls" "run.nls" "meta_pathing.nls" "datetime.nls" "data.nls"]
 
 to setup
-  clear-all
-  set num-clusters 4
-
-  ; Create clusters
-  ask n-of num-clusters patches
-  [
-    ask n-of 20 patches in-radius 5
-    [
-      set pcolor red
-    ]
-  ]
-
-  ; Create turtles
-  create-turtles 2
-  [
-    set size 2
-    set color yellow
-    set time-since-last-found 999
-  ]
-
-  reset-ticks
-end
-
-to go
-  tick
-  ask turtles [search]
-end
-
-to search
-  ifelse time-since-last-found <= 20
-     [right (random 181) - 90]
-     [right (random 21) - 10]
-
-  forward 1
-
-  ifelse pcolor = red
-    [
-      set time-since-last-found 0
-      set pcolor yellow
-    ]
-    [set time-since-last-found time-since-last-found + 1]
+  ca
+  setup-static
+  setup-data
+  setup-run
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
-10
-647
-448
+0
+130
+904
+444
 -1
 -1
-13.0
+9.532
 1
 10
 1
 1
 1
 0
+0
+0
 1
-1
-1
--16
-16
--16
-16
+0
+93
+0
+31
 0
 0
 1
@@ -73,11 +35,11 @@ ticks
 30.0
 
 BUTTON
-26
-30
-96
-63
-NIL
+11
+34
+74
+67
+setup
 setup
 NIL
 1
@@ -90,13 +52,234 @@ NIL
 1
 
 BUTTON
-117
-31
-180
-64
+777
+77
+840
+110
+tick
+go
 NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+155
+50
+218
+83
+load
+load
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+474
+53
+579
+86
+init-spawners
+init-spawners
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+740
+41
+826
+74
+NIL
+setup-run
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+88
+10
+185
+43
+NIL
+setup-static
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+475
+89
+594
+122
+NIL
+init-path-finding\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+233
+14
+326
+47
+NIL
+setup-data\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+261
+91
+344
+124
+NIL
+init-floors
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+361
+55
+465
+88
+NIL
+init-platforms\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+264
+58
+360
+91
+NIL
+init-basics\n\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+471
+20
+561
+53
+NIL
+init-portals\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+361
+90
+458
+123
+NIL
+init-grounds\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+672
+75
+735
+108
+go
 go
 T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+452
+561
+537
+594
+NIL
+save-logs\n
+NIL
 1
 T
 OBSERVER
@@ -448,7 +631,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.1.1
+NetLogo 6.3.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@

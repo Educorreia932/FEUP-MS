@@ -1,0 +1,65 @@
+extensions [time]
+
+to-report format-io-date [_date-and-time]
+  let t-datetime get-datetime _date-and-time
+  let formated_time time:show t-datetime "yyyy_MM_dd_HH_mm_ss"
+  report formated_time
+end
+
+to-report get-datetime [_date-and-time]
+  let year-month-day date-and-time-get-date _date-and-time
+  let hours-minutes-seconds-milli date-and-time-get-time _date-and-time
+  
+  let year item 0 year-month-day
+  let month item 1 year-month-day
+  let day item 2 year-month-day
+  let hours item 0 hours-minutes-seconds-milli
+  let minutes item 1 hours-minutes-seconds-milli
+  let seconds item 2 hours-minutes-seconds-milli
+  let milli item 3 hours-minutes-seconds-milli
+  let time-str (word year "-" month "-" day " " hours ":" minutes ":" seconds "." milli)
+  let t-datetime time:create time-str
+  report t-datetime
+end
+ 
+to-report date-and-time-get-date [_date-and-time]
+  let _length length _date-and-time
+  let year substring _date-and-time ( _length - 4) _length
+  
+  let month-string-start-index _length - 4 - 1 - TIME-MONTH-STR-SIZE
+  let month_string substring date-and-time ( month-string-start-index) ( month-string-start-index + 3)
+  let day substring _date-and-time ( month-string-start-index - 3) ( month-string-start-index - 3 + 2)
+  let month_index position month_string TIME-MONTHS
+  
+  if month_index = false [
+    error (word "Could not parse month in date-and-time string. Month:" month_string)
+  ]
+  let month month_index + 1
+  report (list year month day)
+end
+
+to-report date-and-time-get-time [_date-and-time]
+let _length length _date-and-time
+  let hours substring _date-and-time 0 2
+  let minutes substring _date-and-time 3 5
+  let seconds substring _date-and-time 6 8
+  let milli substring _date-and-time 9 12
+  let am-pm substring _date-and-time 13 ( _length - 13)
+ 
+  let hours-int read-from-string hours
+  set hours-int hours-int mod 12
+  if am-pm = TIME-PM-STR [
+    set hours-int hours-int + 12
+  ]
+  
+  set hours (word hours-int)
+  report (list hours minutes seconds milli)
+report 0
+
+end
+  
+
+to save-end-data
+  file-open "test.txt"
+  file-write number-passengers
+end

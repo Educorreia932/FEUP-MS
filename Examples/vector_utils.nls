@@ -1,0 +1,127 @@
+
+to-report rotate-vector-clock [vector]
+  let new-x item 1 vector * 1
+  let new-y item 0 vector * -1
+  report list new-x new-y
+end
+
+to-report rotate-vector-counterclock [vector]
+  let new-x item 1 vector * -1
+  let new-y item 0 vector * 1
+  report list new-x new-y
+end
+
+; observer
+to-report rotate-vector [vector angle]
+  let x1 item 0 vector
+  let y1 item 1 vector
+  let x2 (cos angle) * x1 - (sin angle) * y1
+  let y2 (sin angle) * x1 + (cos angle) * y1
+  report list x2 y2 
+end
+
+to-report symmetric-vector [vector]
+  let new-x -1 * item 0 vector
+  let new-y -1 * item 1 vector
+  report list new-x new-y
+end
+
+;observer
+to-report from-to-vector [p1 p2]
+  let x [pxcor] of p2 - [pxcor] of p1
+  let y [pycor] of p2 - [pycor] of p1
+  report list x y
+end
+
+to-report vector-direction [vector]
+  report atan item 1 vector item 0 vector
+end
+
+; observer
+to-report vector-heading [vector]
+  let angle vector-direction vector
+  let _heading ( -1 * angle + 90)
+  report _heading
+end
+
+; observer
+to-report distance-vector [vector]
+  let x item 0 vector
+  let y item 1 vector
+  report sqrt(x * x + y * y)
+end
+
+; observer
+to-report distance-vector-squared [vector]
+  let x item 0 vector
+  let y item 1 vector
+  report x * x + y * y
+end
+
+; observer
+to-report add-vector [v1 v2]
+  let x1 item 0 v1
+  let y1 item 1 v1
+  let x2 item 0 v2
+  let y2 item 1 v2
+  report (list (x1 + x2) (y1 + y2))
+end
+
+to-report subtract-vector [v1 v2]
+  let x1 item 0 v1
+  let y1 item 1 v1
+  let x2 item 0 v2
+  let y2 item 1 v2
+  report (list (x1 - x2) (y1 - y2))
+end
+
+; observer
+to-report normalize-vector [vector]
+  let magnitude distance-vector vector
+  let x item 0 vector
+  let y item 1 vector
+  report (list (x / magnitude) (y / magnitude))  
+end
+
+; observer
+to-report scale-vector [vector scale]
+  let x item 0 vector
+  let y item 1 vector
+  report (list (x * scale) (y * scale))  
+end
+
+to-report scale-to-vector [vector scale]
+  report scale-vector ( normalize-vector vector ) scale
+end
+
+to-report subtract-magnitude-from-vector [vector magnitude]
+  let original-magnitude distance-vector vector
+  if original-magnitude <= magnitude [ 
+    report (list 0 0) 
+  ]
+  let scale (original-magnitude - magnitude) / magnitude
+  let scaled-vector scale-vector vector scale
+  let subtracted-vector subtract-vector vector scaled-vector
+  let x item 0 subtracted-vector
+  let y item 1 subtracted-vector
+  report (list x y)
+end
+
+to-report repel-vector [particle-vector]
+  ; Lennard-Jones model
+  let particle-distance distance-vector particle-vector
+;  let force-magnitude 4 * collision-epsilon * ( (collision-sigma / particle-distance) ^ 12 - (collision-sigma / particle-distance) ^ 6 )
+   let force-magnitude collision-sigma - particle-distance
+  let _repel-vector scale-to-vector particle-vector force-magnitude
+  report _repel-vector   
+end
+
+; observer
+to-report to-radians [angle]
+  report angle * pi / 180
+end
+
+; observer
+to-report to-degrees [angle]
+  report 180 * angle / pi  
+end

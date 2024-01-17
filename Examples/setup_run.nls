@@ -1,0 +1,214 @@
+
+globals [
+  ; VARAIABLES
+  ;PRE RUN
+  number-passengers left-to-spawn
+  
+  
+  ; RUN
+  passenger-step collision-calculations-per-tick
+  collision-radius
+  collision-force-multiplier
+  collision-epsilon
+  
+  wall-collision-repel
+  
+  first-end
+  ; infered
+  true-collision-radius   collision-sigma ; equivalent, just nomenclature
+]
+
+; observer
+to setup-run-constants 
+  ; PRE RUN
+  set number-passengers 20
+  
+  ; RUN
+  set passenger-step 0.3
+  set collision-calculations-per-tick 5
+  
+  ; Collision if other agent within turtle-radius + collision-radius
+  ; If collision-radius <= turtle-radius, turtles must overlap for collision
+  ; If collision-radius > turtle-radius, turtles collide even at a distance
+  set collision-radius 0.15
+  set collision-force-multiplier 0.4
+  set collision-epsilon 0.05 ; not used
+  
+  
+  set wall-collision-repel 0.1
+  
+  set first-end true
+  ; inferred
+  set true-collision-radius collision-radius + turtle-radius
+  set collision-sigma collision-radius + turtle-radius
+  
+  if true-collision-radius >= 1[
+    user-message "Collision detection compromised. Collision should only be able to take place within neighbors patches of a turtle" 
+  ]
+  
+  
+  set LOG-CROWDNESS-RADII [ 0.8 1 1.2 1.4 ]
+  
+  
+end
+
+; observer
+to setup-run
+  init-runnables
+  setup-run-constants
+  setup-spawning
+  ask links [hide-link]
+  clear-drawing
+  reset-ticks
+  
+  log-setup-run 
+  tick
+  
+  print "Finished setting up the run"
+
+end
+
+; observer
+to init-runnables 
+  ask train-cells [hide-turtle]
+  ask outside-cells [hide-turtle]
+  ; ask trains [hide-turtle]
+  ask passengers [die]
+end
+
+; observer
+to setup-spawning
+  let spawner-patches patches with [not empty? filter [i -> member? i PTS-DESTINY] pts]
+  repeat number-passengers [
+    ask one-of spawner-patches [
+      let sprouted-passenger sprout-passenger
+      ask sprouted-passenger [ 
+        route-passenger 
+        path-passenger
+      ]
+    ] 
+  ]
+end
+
+
+; patch
+to-report sprout-passenger 
+  let collides true
+  let sprouted-passenger 0
+  let p self
+  while [collides]
+  [
+    let random-x random-float 0.98 - 0.49 ; prevent passing to another patch due to roundings
+    let random-y random-float 1 - 0.5
+    let pass-x pxcor + random-x
+    let pass-y pycor + random-y
+    let pass-pos list pass-x pass-y
+    if not does-intersect-turtle-pos-around pass-pos [
+      set collides false
+      sprout-passengers 1 [
+        set size turtle-size
+        set shape turtle-shape
+        set color [128 0 128]
+        setxy pass-x pass-y
+        
+        set spawned true
+        set reached-destination false
+        set source-patch p
+        set source [p-destination] of p
+        
+        set p-init-data []
+        set p-tick-data []
+        set p-end-data []
+        
+        set sprouted-passenger self
+      ]  
+    ]
+  ]
+  report sprouted-passenger
+  
+end
+
+; passenger
+to route-passenger 
+  let pass-source source
+  let all-train-destinations trains
+  let all-outside-destinations outsides
+  
+  let all-destinations ( turtle-set  all-train-destinations all-outside-destinations)
+  let other-destinations all-destinations with [
+    self != pass-source
+  ]
+  
+  let chosen-destination one-of other-destinations
+  
+  set destination chosen-destination
+  
+  let possible-destination-patches patches with [p-destination = chosen-destination]
+  set destination-patch one-of possible-destination-patches
+end 
+
+; patch
+to-report p-destination
+  if not is-destiny [
+    report 0
+  ]
+  let id p-poi-id
+  (
+    
+    ifelse p-destiny = PT-TRAIN [
+      let destiny-trains trains with [tt-id = id]
+      report one-of destiny-trains
+    ]
+    p-destiny = PT-OUTSIDE [
+      let destiny-outsides outsides with [tt-id = id]
+      report one-of destiny-outsides
+      
+    ]
+  )
+  report 0
+  
+end
+
+; patch
+to-report is-destiny
+  report not empty? _p-destinies
+end
+
+to-report p-destiny 
+  report first _p-destinies
+end
+
+; patch
+to-report _p-destinies 
+  report filter [i -> member? i PTS-DESTINY] pts
+end
+
+; passenger
+to path-passenger
+  let meta-path p-platform-pathfind source-patch destination-patch
+;  show meta-path ;DEBUG
+  set passenger-meta-path meta-path
+  set passenger-meta-path-index 0
+  set passenger-simple-path-index 0
+  set passenger-move-delay 0
+  
+;  show-meta-walked-path meta-path ;DEBUG
+  ;  show "leaving path-pasenger META PATH IS BAD"
+end
+
+; observer
+to log-setup-run
+  if LOG-DATA [
+    ask passengers[
+      let pos pos-info (list xcor ycor)
+      let source-pos pos-info (list [pxcor] of [patch-here] of source [pycor] of [patch-here] of source)
+      let destination-patch-pos pos-info (list [pxcor] of destination-patch [pycor] of destination-patch)
+      let destination-pos pos-info (list [pxcor] of [patch-here] of destination [pycor] of [patch-here] of destination)
+      let data (list pos source source-pos destination destination-pos destination-patch-pos passenger-meta-path)
+      set p-init-data data
+      log-passenger-tick ; register tick 0
+    ]
+
+    set init-data (list FLOORS floor-height floor-width platforms count passengers count trains count portals)
+  ]
+end

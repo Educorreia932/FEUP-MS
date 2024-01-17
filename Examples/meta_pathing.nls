@@ -1,0 +1,418 @@
+
+; patch
+to-report p-is-portal?
+  report any? portals-here
+end
+
+; patch 
+to-report p-portal-accesses-portals
+  let source-portal one-of portals-here
+  let accessible-portals []
+  if source-portal != nobody [
+    ask source-portal [
+      set accessible-portals access-neighbors
+    ]
+  ]
+  report accessible-portals
+end 
+
+; patch
+to-report p-portal-findables-portals
+  let source-portal one-of portals-here
+  let findable-portals []
+  if source-portal != nobody [
+    ask source-portal [
+      let p-portal-findables findable-neighbors
+      set findable-portals p-portal-findables with [is-portal? self]
+    ] 
+  ]
+  report findable-portals
+end
+
+; patch
+to-report p-platform-neighbors [nodes]
+  let neighbor-nodes 0
+  ifelse p-is-portal? [
+    let portal-node one-of portals-here
+    set neighbor-nodes other nodes with [
+      p-platform = [p-platform] of myself
+      or
+      member? portal-node p-portal-accesses-portals
+    ]
+  ]
+  [
+    set neighbor-nodes nodes with [
+      p-platform = [p-platform] of myself 
+    ]
+  ]
+  report other neighbor-nodes
+end 
+
+; patch 
+; to-report p-distance-platform [destination-p]
+;   let _distance 0
+;   ifelse p-platform = [p-platform] of destination-p [
+;     ; normal pathfind
+;     show "normal pathfind"
+;     let path p-pathfind-better self destination-p
+;     set _distance distance-path path
+;   ][
+;     let source-portal one-of portals-here
+;     let destination-portal one-of [portals-here] of destination-p
+;     ask source-portal [
+;       set _distance [p-cost] of access-with destination-portal
+;     ]
+;   ]
+;   report _distance
+; end
+
+;to-report distance-portals [p1 p2]
+;  let _distance-portal 0
+;  ask p1 [
+;  let portal-link access-with p2
+;    ifelse portal-access != nobody [
+;      set _distance-portal [p-cost] of portal-access
+;    ]
+;    [
+;      set portal-link findable-with p2
+;      
+;    ]
+;  ]
+;end
+
+; observer 
+to reset-p-platform-pathfind
+  ask meta-pois [die]
+  ask pathables [die]
+end
+; observer
+; TODO test
+to-report p-platform-pathfind [start-node goal-node]
+  reset-show-paths
+  if [p-platform] of start-node = [p-platform] of goal-node [
+    let path p-pathfind-straightened start-node goal-node
+    let meta-path (list path)
+    report meta-path
+  ]
+  ; SETUP
+  reset-p-platform-pathfind
+  let open-set []
+  let nodes patches with [
+    p-is-portal? 
+    or 
+    self = start-node
+    or 
+    self = goal-node
+  ] 
+  
+  
+  ask nodes [
+    sprout-meta-pois 1 []
+  ]
+  
+  
+  ask meta-pois [
+    let this-meta-poi self
+    let this-patch patch-here
+    let this-platform [p-platform] of patch-here
+    
+    let this-portal one-of portals-here
+    
+    ifelse this-portal != nobody [
+      ; We are a portal
+      
+      ; Create findables to other accessible portals
+      let accessible-portals [access-neighbors] of this-portal 
+      ask accessible-portals [
+        let other-meta-poi one-of meta-pois-here
+        if out-findable-to this-meta-poi = nobody [
+          ; no need for duplicating calculations since access paths are symmetrical (just teleport)
+          let portal-access access-with this-portal
+          let portal-access-cost [p-cost] of portal-access
+          let portal-access-path (list ( [patch-here] of this-portal ) ( [patch-here] of self) )
+          ask other-meta-poi [
+            create-pathable-from this-meta-poi [ ; from this-meta-poi to other-meta-poi
+              set pathable-path portal-access-path
+              set pathable-cost portal-access-cost
+              set color [0 255 255]
+            ]
+            create-pathable-to this-meta-poi [ ; from other-meta-poi to this-meta-poi
+              set pathable-path reverse portal-access-path
+              set pathable-cost portal-access-cost 
+              set color [0 255 255]
+            ]
+          ]
+        ]
+      ]
+      
+      ; Create findables to other portals in the platform
+      ; Just the out direction from this-meta-poi
+      let findable-portals ( ( [out-findable-neighbors] of this-portal ) with [any? portals-here] )
+      ; show (list "findable portals are " findable-portals)
+      ask findable-portals [
+        let other-meta-poi one-of meta-pois-here
+        let portable-findable in-findable-from this-portal
+        let portal-findable-cost [f-cost] of portable-findable
+        let portal-findable-path [f-path] of portable-findable
+        ask other-meta-poi [
+          create-pathable-from this-meta-poi [
+            set pathable-path portal-findable-path
+            set pathable-cost portal-findable-cost
+            set color [0 255 255]
+          ]
+        ]
+      ]      
+    ]
+    
+    
+    [
+      ; We are the source or destination
+      let other-meta-pois other meta-pois
+      ask other-meta-pois with [[p-platform] of [patch-here] of self = this-platform] [
+        let out-pathables-to-this-meta-poi out-pathable-to this-meta-poi
+        
+        
+        let goal-turtle one-of [portals-here] of self
+          
+        (ifelse this-patch = start-node [
+          ;let from-to-path p-pathfind-straightened this-patch [patch-here] of self 
+          let from-to-path passenger-merge-path-to-pathable this-patch goal-turtle true
+          let path from-to-path 
+          ; set path normalize-path path
+          let path-cost distance-path path
+          
+          
+          create-pathable-from this-meta-poi [ ; from this-meta-poi to other-meta-poi
+            set pathable-path path
+            set pathable-cost path-cost
+            set color [0 255 255]
+          ] 
+          ]
+          this-patch = goal-node [
+            
+            ;let to-from-path p-pathfind-straightened [patch-here] of self this-patch
+            let from-to-path passenger-merge-path-to-pathable this-patch goal-turtle false
+            let path from-to-path
+            
+            ; set path normalize-path to-from-path
+            let path-cost distance-path path
+            create-pathable-to this-meta-poi [ ; from other-meta-poi to this-meta-poi
+              set pathable-path path
+              set pathable-cost path-cost
+              set color [0 255 255]
+            ] 
+          ]
+          [
+            error (word "Meta pathing " start-node "->" goal-node ": " this-patch " is not start or goal")
+          ]
+        )
+        
+      ]
+      
+    ]
+  ]
+  
+  ask nodes [ 
+    set g-score infinity
+    set parent 0
+    set open-set fput self open-set
+  ]
+  
+  ask start-node [
+    set g-score 0
+  ]
+  
+  reset-show-paths ; DEBUG
+  
+  ; print (list "before running" map [ x -> (list x [g-score] of x) ] open-set)
+  ; RUNNING
+  let index -1
+  while [not empty? open-set ] [
+    set index index + 1
+    let current-node first sort-by [[t1 t2] -> [g-score] of t1 < [g-score] of t2] open-set
+    ask current-node [sprout-debugers 1 [set color black]] ; DEBUG
+    
+    ; print (list "open-set" map [x -> (list x [g-score] of x)] sort-by [[x y] -> [g-score] of x < [g-score] of y] open-set)
+    ; show (list "index" index "node" current-node)
+    if current-node = goal-node [
+      ; show "found"
+      ; ask goal-node [        
+      ; show (list "goal-node says" parent g-score)      ] ;debug
+      
+      let meta-path backtrace-path start-node goal-node
+      
+      let composed-path []
+      let meta-path-length length meta-path
+      let meta-path-index 0
+      ; show (list "mounting found meta-path" )
+      repeat meta-path-length - 1  [
+        let from-in-meta-path item meta-path-index meta-path
+        let to-in-meta-path item ( meta-path-index + 1 ) meta-path
+        ; show  (list "patches" from-in-meta-path "->" to-in-meta-path)
+        let from-meta-poi one-of [meta-pois-here] of from-in-meta-path
+        let to-meta-poi one-of [meta-pois-here] of to-in-meta-path
+        ; show  (list "meta-pois" from-meta-poi "->" to-meta-poi )
+        ask from-meta-poi [
+          let pathable-from-to out-pathable-to to-meta-poi
+          let pathable-from-to-path [pathable-path] of pathable-from-to
+          ; show (list "pathable" pathable-from-to "path" pathable-from-to-path)
+          if first pathable-from-to-path != from-in-meta-path [
+            ; reverse
+            set pathable-from-to-path reverse pathable-from-to-path 
+          ]
+          set composed-path lput pathable-from-to-path composed-path 
+        ]
+        set meta-path-index meta-path-index + 1
+      ]
+      report composed-path
+    ]
+    
+    set open-set (remove current-node open-set)
+    
+    
+    
+    ask current-node [
+      let current-poi one-of [meta-pois-here] of current-node
+      let neighbor-meta-pois [out-pathable-neighbors] of current-poi
+      let neighbor-nodes [patch-here] of neighbor-meta-pois
+      let not-explored-neighbor-nodes filter [x -> member? x neighbor-nodes] open-set
+      ; show (list "neighbors" neighbor-nodes "not-explored" not-explored-neighbor-nodes)
+      foreach not-explored-neighbor-nodes [ x -> 
+        ask x [
+          ask one-of meta-pois-here[ 
+            let pathable-edge in-pathable-from current-poi
+            let edge-distance [pathable-cost] of pathable-edge
+            let alt [g-score] of current-node + edge-distance
+            ; show (list current-node "->" x "edge-distance" edge-distance "alt" alt "pathable-edge" pathable-edge)
+            if alt < g-score [
+              set g-score alt
+              set parent current-node
+            ]
+          ]
+        ]
+      ]
+    ]
+    
+  ]
+  ;  show "empty"
+  report []
+  
+end
+
+
+to-report passenger-merge-path-to-pathable  [passenger-patch goal-turtle passenger-patch-is-start]
+  
+  ; For faster performance only the 2nd (from the start or last) of the path is verified. 
+  ; For completeness, should check for straight paths  to the end of the path (either the last or the first)
+  ; Instead we just verify if the solution is better, if not then normal pathfinding to the goal should find a better solution in any case
+  ; Could just try to find a straight path to the checkpoint!
+  ; Is straight to 2nd? Continue
+  ; Is straight to 3rd? Continue
+  ; Is straight to 4th? No? 
+  ;    Pathfind to 4th: Is it better than 0 -> 3 -> 4 th? If so then keep. Else to 1 -> 3 -> 4
+  if not [is-destiny] of passenger-patch [
+    error (word passenger-patch " should be in a destiny")  
+  ]
+  
+  let passenger-destination-turtle [p-destination] of passenger-patch
+  
+  let already-found-path 0
+  let checkpoint 0
+  let pivot 0
+  let aux-turtle 0
+  let tentative-patch 0
+  let worse-tentative-patch 0
+  
+  ask passenger-destination-turtle [
+    ifelse passenger-patch-is-start [
+      let link-already-found-path out-findable-to goal-turtle
+      set already-found-path [f-path] of link-already-found-path
+      set checkpoint item 1 already-found-path ; second
+      set pivot passenger-patch
+      set tentative-patch checkpoint
+      set worse-tentative-patch [patch-here] of passenger-destination-turtle
+    ] 
+    [
+      let link-already-found-path in-findable-from goal-turtle
+      set already-found-path [f-path] of link-already-found-path 
+      set checkpoint item (length already-found-path - 2) already-found-path ; penultimum
+      ;set pivot checkpoint
+      ;set tentative-patch passenger-patch
+      ;set worse-tentative-patch [patch-here] of passenger-destination-turtle
+      ;show (word "pivot" pivot "tentative-patch" tentative-patch "wrose-tentativepatch" worse-tentative-patch)
+      
+      set tentative-patch checkpoint
+      set worse-tentative-patch [patch-here] of passenger-destination-turtle
+      set pivot passenger-patch
+      
+      
+      
+    ]
+    
+  ]
+  
+  
+  ask tentative-patch [
+    sprout 1 [
+      hide-turtle
+      face worse-tentative-patch
+      set aux-turtle self
+    ] 
+  ]
+  let turtle-patch [patch-here] of aux-turtle
+  while [turtle-patch != worse-tentative-patch  ]
+  [
+    let is-a-straight-path 0
+    ifelse passenger-patch-is-start [
+          set is-a-straight-path is-straight-path-pos p-pos pivot p-pos turtle-patch
+    ][
+     set is-a-straight-path is-straight-path-pos p-pos turtle-patch p-pos pivot 
+    ]
+    if is-straight-path-pos p-pos pivot p-pos turtle-patch [
+    ; show (word "is staright from" pivot " to " turtle-patch "? yes")
+      let path already-found-path
+      ifelse passenger-patch-is-start [
+        set path replace-item 0 path passenger-patch
+        if turtle-patch != checkpoint [
+          set path insert-item 1 path turtle-patch
+        ]
+      ]
+      [
+        set path replace-item ( length path - 1 ) path passenger-patch
+        if turtle-patch != checkpoint [
+          set path insert-item (length path - 1 ) path turtle-patch
+        ] 
+      ]
+      ; done! 
+      ask aux-turtle[die]
+      ; show (word "Update path!")
+      report path
+    ]
+    ; show (word "is staright from" pivot " to " turtle-patch "? no")
+    while [[patch-here] of aux-turtle = turtle-patch] [
+      ask aux-turtle
+      [
+        forward straight-pathing-step
+      ]
+    ]
+    set turtle-patch [patch-here] of aux-turtle
+    
+  ]
+  
+  ; couldn't even find a straight path to the patch of the same destination
+  ; show (word "Couldn't find straight path from " passenger-patch " to " passenger-destination-turtle)
+  let path 0
+  ifelse passenger-patch-is-start[
+    set path p-pathfind-straightened passenger-patch ( [patch-here] of goal-turtle)
+  ]
+  [
+    set path p-pathfind-straightened ( [patch-here] of goal-turtle) passenger-patch
+  ]
+  ask aux-turtle [die]
+  report path
+  
+end
+
+to-report distance-meta-path [meta-path]
+  report sum ( map [x -> distance-path x] meta-path )
+end

@@ -1,0 +1,809 @@
+; observer
+to init-path-finding
+  init-portals-pathfinding
+  init-floors-pathfinding
+  print "Finished pathfinding"
+end
+
+; observer
+to init-portals-pathfinding 
+  ask portals [
+    let p-a1 self
+    let connected-portals other portals with [
+      tfloor-x = [tfloor-x] of myself
+      and 
+      tfloor-y =  [tfloor-y] of myself
+    ]
+    ask connected-portals [
+      let portal-cost 0
+      if is-elevator [
+        let p-a1-floor [tfloor-id] of p-a1
+        let p-a2-floor [tfloor-id] of self
+        let floor-difference abs (p-a1-floor - p-a2-floor)
+        set portal-cost floor-difference * elevator-cost-multiplier
+        ; show (list "is elevator" p-a1-floor p-a2-floor floor-difference portal-cost)
+      ]
+      
+      create-access-with p-a1 [
+        set a1 p-a1
+        set a2 myself
+        
+        
+        set p-cost portal-cost
+        set color red 
+      ] 
+    ]
+  ]
+end
+
+; observer
+to init-floors-pathfinding
+  let platforms-index 0
+  repeat PLATFORMS [
+    let path-found-turtles []
+    let poi-turtles turtles with [member? tt TTS-PATHABLE and t-platform = platforms-index]
+    ask poi-turtles [
+      let to-turtle self
+      ask other poi-turtles [
+        let from-turtle self
+        let path pathfind-straigthened to-turtle
+        let path-cost distance-path path
+        create-findable-to to-turtle [
+          set f1 from-turtle
+          set f2 to-turtle
+          set f-path path
+          set f-cost path-cost
+          set f-p-id platforms-index
+          set color green
+        ]
+      ] 
+    ]
+    set platforms-index platforms-index + 1
+  ]
+end
+
+; observer
+; to init-floors-pathfinding-better
+;   let platforms-index 0
+;   repeat PLATFORMS [
+;     let path-found-turtles []
+;     let poi-turtles turtles with [member? tt TTS-PATHABLE and t-platform = platforms-index]
+;     let n count poi-turtles
+;     ask poi-turtles [
+;       let from-turtle self
+;       ask other poi-turtles [
+;         let to-turtle self
+;         if not findable-neighbor? from-turtle [
+;           
+;           create-findable-with from-turtle [
+;             let path []
+;             ask from-turtle [
+;               set path pathfind-straigthened to-turtle
+;             ]
+;             let path-cost distance-path path
+;             set f1 to-turtle
+;             set f2 from-turtle
+;             set f-path path
+;             set f-cost path-cost
+;             set f-p-id platforms-index
+;             
+;           ] 
+;         ]
+;       ] 
+;     ]
+;     set platforms-index platforms-index + 1
+;   ]
+;   ;  ask findables [hide-link]
+;   
+; end
+
+
+
+
+; observer
+to-report adjacent [p1 p2]
+  let p1-neighbors []
+  ask p1 [
+    set p1-neighbors neighbors
+  ]
+  report member? p2 p1-neighbors
+end
+
+; patch
+to-report h-distance [destination-p]
+  report distance destination-p
+end
+
+; patch
+to-report is-pathable
+  report not empty? filter [i -> member? i PTS-PATHABLE] pts
+end
+
+; patch
+to-report is-always-pathable
+  report not empty? filter [i -> member? i PTS-ALWAYS-PATHABLE] pts
+end
+
+; patch
+to-report is-up-esc-entry
+  report member? PT-UP-ESC-ENTRY pts
+end
+
+; patch
+to-report is-up-esc
+  report member? PT-UP-ESC pts
+end
+
+; patch
+to-report is-up-esc-exit
+  report member? PT-UP-ESC-exit pts
+end
+
+; patch
+to-report is-down-esc-entry
+  report member? PT-DOWN-ESC-ENTRY pts
+end
+
+; patch
+to-report is-down-esc
+  report member? PT-DOWN-ESC pts
+end
+
+; patch
+to-report is-down-esc-exit
+  report member? PT-DOWN-ESC-exit pts
+end
+
+
+to-report is-pathable-from-pos [from-pos to-pos]
+  
+  let to-x item 0 to-pos
+  let to-y item 1 to-pos
+  let from-x item 0 from-pos
+  let from-y item 1 from-pos
+  
+  let to-p patch to-x to-y
+  let from-p patch from-x from-y
+  
+  let _is-pathable 0
+  ask to-p [
+   set _is-pathable is-pathable-from from-p 
+  ]
+  report _is-pathable
+end
+; patch
+to-report is-pathable-from [p-from]
+  if self = p-from [
+    report is-pathable
+  ]
+  (
+  ifelse [is-always-pathable] of p-from [
+    ifelse 
+    (
+      is-always-pathable
+      or
+      is-up-esc-entry
+        or
+      is-down-esc-entry
+      )
+      [report true] [report false]
+      
+    ]
+    [is-up-esc-entry] of p-from [
+      ; show (list "from is up esc entry ")
+      ifelse ( 
+        is-up-esc 
+        or
+        is-up-esc-entry
+      )[report true][report false]
+    ]
+    [is-up-esc] of p-from[
+      ; show (list "from is up esc")
+      ifelse (
+        is-up-esc
+        or
+        is-up-esc-exit
+      ) 
+      [report true] [report false]
+    ]
+    [is-up-esc-exit] of p-from [
+      ; show (list "from is up esc exit")
+      ifelse (
+        is-always-pathable 
+;        or 
+;        is-up-esc-exit
+        or
+        is-up-esc-entry
+        or
+        is-down-esc-entry
+      )
+      [report true] [report false]
+      
+    ]
+    [is-down-esc-entry] of p-from [
+      ; show (list "from is down  esc entry ")
+      ifelse  (is-down-esc or is-down-esc-entry) [report true][report false]
+    ]
+  [is-down-esc] of p-from [
+    ; show (list "from is down esc")
+    ifelse (
+      is-down-esc
+      or
+      is-down-esc-exit
+    ) 
+    [report true] [report false]
+  ]
+  [is-down-esc-exit] of p-from [
+    ; show (list "from is down esc exit")
+    ifelse 
+    (
+      is-always-pathable
+;      or
+;        is-down-esc-exit
+      or
+      is-up-esc-entry
+      or
+      is-down-esc-entry
+    )
+    [report true] [report false]
+  ]
+)
+
+show (list "error" pts)
+
+
+end
+; observer
+to-report backtrace-path [start-vertex goal-vertex]
+  let path []
+  let current-vertex goal-vertex
+  while [current-vertex != 0] [
+    set path fput current-vertex path
+    set current-vertex [parent] of current-vertex
+  ]
+  if first path != start-vertex [
+    report [] 
+  ]
+  report path
+end
+
+; turtle
+to-report pathfind [pathfind-to]
+  ask debugers [die]
+  let start-vertex patch-here
+  let goal-vertex [patch-here] of pathfind-to
+  report p-pathfind start-vertex goal-vertex
+end
+
+; turtle
+to-report pathfind-straigthened [pathfind-to]
+  ask debugers [die]
+  let start-vertex patch-here
+  let goal-vertex [patch-here] of pathfind-to
+  report p-pathfind-straightened start-vertex goal-vertex
+end
+
+; turtle
+;to-report pathfind-better [pathfind-to]
+;  ask debugers [die]
+;  let start-vertex patch-here
+;  let goal-vertex [patch-here] of pathfind-to
+;  report p-pathfind-better start-vertex goal-vertex
+;end
+
+; observer
+to-report p-pathfind [start-vertex goal-vertex]
+  ; show (list "pathfind start" "goal vertex" goal-vertex)
+  if [p-platform] of start-vertex != [p-platform] of goal-vertex [
+    show (list "pathfinding patches in different platforms. start:" start-vertex " in " [p-platform] of start-vertex " to end: " goal-vertex " in" [p-platform] of goal-vertex)
+  ]
+  ask patches with [is-pathable and p-platform = [p-platform] of start-vertex] [
+    set g-score infinity
+    set h-score h-distance goal-vertex
+    set f-score (g-score + h-score)
+    set parent 0
+  ]
+  
+  let open-set (list start-vertex)
+  let closed-set []
+  ask start-vertex [
+    set g-score 0
+    set f-score h-score
+  ]
+  
+  while [length open-set > 0 ] [
+    let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
+    
+    if DEBUG [
+      ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+    ]
+    
+    if current-vertex = goal-vertex [ ; Goal reached
+      let path backtrace-path start-vertex goal-vertex
+      report path
+    ]
+    
+    set open-set (remove current-vertex open-set)
+    set closed-set lput current-vertex closed-set 
+    
+    ask current-vertex [
+      let neighbors-that-are-pathable neighbors4 with [
+        is-pathable-from current-vertex
+        ; and 
+        ; is-straight-path-pos (list [pxcor] of current-vertex [pycor] of current-vertex) (list pxcor pycor)
+      ]
+      ask neighbors-that-are-pathable
+      [
+        if not member? self closed-set [
+          let cost distance current-vertex
+          if ([is-up-esc] of current-vertex or [is-down-esc] of current-vertex)
+          [ 
+            set cost cost / escalator-pathing-multiplier
+          ]
+          let tentative-g [g-score] of current-vertex + distance current-vertex 
+          if not member? self open-set or tentative-g < g-score [ 
+            set g-score tentative-g
+            set h-score h-distance  goal-vertex
+            set f-score h-score + g-score
+            set parent current-vertex
+            if not member? self open-set [
+              set open-set lput self open-set
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+  show (list "couldn't find" start-vertex goal-vertex)
+  report []
+end
+
+; observer
+;to-report p-pathfind-naive [start-vertex goal-vertex]
+;  ask patches with [is-pathable] [
+;    set g-score infinity
+;    set h-score h-distance goal-vertex
+;    set f-score (g-score + h-score)
+;    set parent 0
+;  ]
+;  
+;  let open-set (list start-vertex)
+;  let closed-set []
+;  ask start-vertex [
+;    set g-score 0
+;    set f-score h-score
+;  ]
+;  
+;  while [length open-set > 0 ] [
+;    let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
+;    
+;    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+;    
+;    if current-vertex = goal-vertex [ ; Goal reached
+;      let path backtrace-path start-vertex goal-vertex
+;      report path
+;    ]
+;    
+;    set open-set (remove current-vertex open-set)
+;    set closed-set lput current-vertex closed-set
+;    
+;    ask current-vertex [
+;      
+;      let pathable-neighbors neighbors with [is-pathable]
+;      ;      ask pathable-neighbors
+;      ask neighbors with [is-pathable]; BUG for some reason it's not working with the variable?
+;      [
+;        if not member? self closed-set [
+;          let tentative-g [g-score] of current-vertex + distance current-vertex
+;          if not member? self open-set or tentative-g < g-score [
+;            set g-score tentative-g
+;            set f-score h-score + g-score
+;            set parent current-vertex
+;            if not member? self open-set [
+;              set open-set lput self open-set
+;            ]
+;          ]
+;        ]
+;      ]
+;    ]
+;  ]
+;  show (list "couldn't find" start-vertex goal-vertex)
+;  report []
+;end
+
+
+; observer
+to show-pathfinding [start-vertex goal-vertex]
+  let path p-pathfind start-vertex goal-vertex
+  show-path path
+end
+
+; observer
+to show-path [path]
+  let index 0
+  repeat length path - 1 [
+    ask item index path [
+      sprout-debugers 1 [
+      set color red
+      face item (index + 1) path
+      ]
+    ] 
+  set index index + 1
+  ]
+  
+  ask last path [
+    sprout-debugers 1 [
+      set color red
+      set shape "flag"
+    ] 
+  ]
+end
+
+; observer
+to show-walked-path [path]
+  ask first path [
+    sprout-debugers 1 [
+      set color red
+      pd
+      let index 1
+      repeat length path - 1 [
+        let path-patch item index path
+        move-to path-patch
+        set index index + 1
+      ]
+    ]
+  ]
+end
+
+to show-meta-walked-path [meta-path]
+  foreach meta-path [
+    path ->
+    show-walked-path path
+    
+  ]
+  
+end
+; observer
+to reset-show-paths
+  ask debugers [die]
+end
+
+; observer
+to reset-walked-paths
+  clear-drawing
+end
+
+; observer
+to init-normalized-paths
+  let poi-turtles turtles with [member? tt TTS-PATHABLE]
+  ask poi-turtles [
+    let new-poi-paths []
+    foreach poi-paths [
+      poi-path ->
+      let new-path normalize-path poi-path
+      set new-poi-paths lput new-path new-poi-paths
+    ]
+    set poi-paths new-poi-paths
+  ]
+end
+
+; observer
+to-report normalize-path [path]
+  if length path < 3 [
+    report path
+  ]
+  let prev-patch item 0 path
+  let new-path (list prev-patch)
+  let cur-patch item 1 path
+  let prev-vector from-to-vector prev-patch cur-patch
+  let prev-direction vector-direction prev-vector
+  
+  let next-vector []
+  let next-patch nobody
+  
+  let useful-path sublist path 2 length path
+  let index-useful-path 0
+  foreach useful-path[
+    set next-patch item index-useful-path useful-path
+    set next-vector from-to-vector cur-patch next-patch
+    let is-adjacent adjacent cur-patch next-patch
+    let next-direction vector-direction next-vector
+    let is-same-direction prev-direction = next-direction
+    ifelse is-adjacent and is-same-direction [
+      ; Normalize the path
+      set next-vector from-to-vector prev-patch cur-patch
+    ]
+    [
+      ; Add to path
+      set new-path lput cur-patch new-path
+      set prev-vector from-to-vector cur-patch next-patch
+      set prev-direction vector-direction prev-vector
+    ]
+    
+    
+    set index-useful-path index-useful-path + 1
+    set cur-patch next-patch
+    
+  ]
+  
+  set new-path lput last useful-path new-path
+  report new-path
+end
+
+to-report distance-path [path]
+  let total-distance 0
+  let index 0
+  let prev-patch 0
+  let next-patch 0
+  repeat length path - 1 [
+    set prev-patch item index path
+    set next-patch item (index + 1) path
+    ask prev-patch [
+      set total-distance total-distance + distance next-patch
+    ]
+    set index index + 1 
+  ]
+  report total-distance
+end
+
+; observer
+;to-report p-pathfind-better [start-vertex goal-vertex]
+;    ask patches with [is-pathable] [
+;    set g-score infinity
+;    set h-score h-distance goal-vertex
+;    set f-score (g-score + h-score)
+;    set parent 0
+;  ]
+;  
+;  let open-set (list start-vertex)
+;  let closed-set []
+;  ask start-vertex [
+;    set g-score 0
+;    set f-score h-score
+;  ]
+;  
+;  while [length open-set > 0 ] [
+;
+;    let current-vertex first sort-by[[t1 t2] -> [f-score] of t1 < [f-score] of t2] open-set
+;    ;    show (list "current-vertex" current-vertex "->" [parent] of current-vertex)    
+;    ;    user-message (list "current-vertex" current-vertex "->" [parent] of current-vertex)    
+;;    ask current-vertex [sprout-debugers 1 [set color black]] ; DEBUG
+;    
+;    if current-vertex = goal-vertex [ ; Goal reached
+;      let path backtrace-path start-vertex goal-vertex
+;      report path
+;    ]
+;    
+;    set open-set (remove current-vertex open-set)
+;    set closed-set lput current-vertex closed-set
+;    
+;    ask current-vertex [
+;      let pathable-neighbors neighbors with [
+;        is-pathable
+;      ]
+;;      ask pathable-neighbors
+;      ask neighbors4 with [is-pathable] ; BUG for some reason it's not working with the variable?
+;      [
+;        if not member? self closed-set [
+;          let tentative-g [g-score] of current-vertex + distance current-vertex
+;          let current-parent [parent] of current-vertex
+;          let new-parent current-vertex
+;          ;          show (list "inside" self "neighbor of" current-vertex "->" current-parent)
+;;          user-message (list "inside" self "neighbor of" current-vertex "->" current-parent)
+;          if current-parent != 0 [
+;            if is-straight-path current-parent self [
+;              let new-tentative-g [g-score] of current-parent + distance current-parent
+;              if new-tentative-g <= tentative-g [
+;                set tentative-g new-tentative-g
+;                set new-parent current-parent
+;                ;                show (list "found straighter path from" current-parent "to" self "instead of" current-vertex "->" current-parent)
+;;                user-message (list "found straighter path from" current-parent "to" self "instead of" current-vertex "->" current-parent)
+;              ]
+;                          ]
+;                    ]
+;                   if not member? self open-set or tentative-g < g-score [
+;            set g-score tentative-g
+;            set f-score h-score + g-score
+;            set parent new-parent
+;            if not member? self open-set [
+;              set open-set lput self open-set
+;            ]
+;          ]
+;        ]
+;      ]
+;    ]
+;  ]
+;  show (list "couldn't find" start-vertex goal-vertex)
+;  report []
+;end
+
+
+; observer
+to-report is-straight-path [start-vertex goal-vertex]
+  let start-pos (list ([pxcor] of start-vertex) ([pycor] of start-vertex))
+  let goal-pos (list ([pxcor] of goal-vertex) ([pycor] of goal-vertex))
+  let is-straight is-straight-path-pos start-pos goal-pos
+  report is-straight
+end
+
+; observer
+to-report is-straight-path-pos [start-pos goal-pos]
+  let goal-step-length straight-pathing-step
+  let goal-vector subtract-vector goal-pos start-pos
+  let goal-distance-squared distance-vector-squared goal-vector
+  let normalized-goal-vector normalize-vector goal-vector
+  let goal-step scale-vector normalized-goal-vector goal-step-length
+  
+  ;show (list start-pos "->" goal-pos "vector" goal-vector "normalized vector" normalized-goal-vector "goal-step" goal-step)
+  if does-intersect-turtle-pos-around start-pos [
+    report false 
+  ]
+  if does-intersect-turtle-pos-around goal-pos [
+    report false 
+  ]
+  ;show "MOVING ON"
+  let prev-pos start-pos
+  let edge1-diff-vector-normalized rotate-vector-clock normalized-goal-vector
+  let edge2-diff-vector-normalized rotate-vector-counterclock normalized-goal-vector
+  ;show (list "edge 1 edge 2 normalized vector" edge1-diff-vector-normalized edge2-diff-vector-normalized )
+  let edge1-diff-vector scale-vector edge1-diff-vector-normalized turtle-radius
+  let edge2-diff-vector scale-vector edge2-diff-vector-normalized turtle-radius
+  ;show (list "edge 1 edge 2  vector" edge1-diff-vector edge2-diff-vector )
+  let edge1-start-pos add-vector start-pos edge1-diff-vector
+  let edge2-start-pos add-vector start-pos edge2-diff-vector
+  ;show (list "edge 1 edge 2 pos " edge1-start-pos edge2-start-pos)
+  let prev-edge1-pos edge1-start-pos
+  let prev-edge2-pos edge2-start-pos
+  
+  
+  ; debug
+  ;let _direction vector-heading normalized-goal-vector
+  
+  ;let t 0
+  ;let t1 0
+  ;let t2 0
+  ;let t3 0
+  ;ask patch item 0 prev-pos item 1 prev-pos [
+  ;  show (list "PREV POS FOR SPAWN" prev-pos)
+  ;
+  ;  sprout 1 [
+  ;    set xcor item 0 prev-pos
+  ;    set ycor item 1 prev-pos
+  ;    set t self
+  ;    pd
+  ;  ]
+  ;  
+  ;  sprout 1 [
+  ;    set xcor item 0 prev-pos
+  ;    set ycor item 1 prev-pos
+  ;    set heading _direction
+  ;    set t1 self
+  ;    pd
+  ;  ]
+   ; 
+  ;  sprout 1 [
+  ;    set xcor item 0 prev-edge1-pos
+  ;    set ycor item 1 prev-edge1-pos
+  ;    set heading _direction
+  ;    set t2 self
+  ;    pd
+  ;  ]
+  ;  
+  ;  sprout 1 [
+  ;    set xcor item 0 edge2-start-pos
+  ;    set ycor item 1 edge2-start-pos
+  ;    set heading _direction
+  ;    set t3 self
+  ;    pd
+  ;  ]
+  ;]
+  ;let ts ( turtle-set t1 t2 t3)
+  ;  show (list "THE DIRCTION" _direction)
+  
+  
+  while [true] [
+    let cur-pos add-vector prev-pos goal-step
+    let cur-edge1-pos add-vector prev-edge1-pos goal-step
+    let cur-edge2-pos add-vector prev-edge2-pos goal-step
+    let cur-vector subtract-vector cur-pos start-pos
+    let cur-distance-squared distance-vector-squared cur-vector
+    
+    ;ask ts [
+    ;  fd goal-step-length
+    ;]
+    ;ask t[ 
+    ; set xcor item 0 cur-pos
+    ; set ycor item 1 cur-pos 
+    ;]
+    ; debug
+    ;show (list "cur pos" cur-pos "cur vector" cur-vector "cur-distance" sqrt cur-distance-squared "goal-distance" sqrt goal-distance-squared)
+    
+    if cur-distance-squared >= goal-distance-squared[
+      ; overshot goal
+      ;ask ts[die]
+      ;ask t [ die]
+      report true 
+    ]
+    
+    ; Check for intersects
+    ;show (list "is pathable froms" is-pathable-from-pos prev-pos cur-pos is-pathable-from-pos prev-pos prev-edge1-pos is-pathable-from-pos prev-pos prev-edge2-pos 
+      ;is-pathable-from-pos prev-pos cur-edge1-pos is-pathable-from-pos prev-pos cur-edge2-pos)
+    ; show (list "pairs" "[" prev-pos cur-pos "]" is-pathable-from-pos prev-pos cur-pos)
+    ;show (list "pairs" "[" prev-pos prev-edge1-pos "]" is-pathable-from-pos prev-pos prev-edge1-pos)
+    ;show (list "pairs" "[" prev-pos prev-edge2-pos  "]" is-pathable-from-pos prev-pos prev-edge2-pos )
+    ;show (list "pairs" "[" prev-pos cur-edge1-pos "]" is-pathable-from-pos prev-pos cur-edge1-pos)
+    ;show (list "pairs" "[" prev-pos cur-edge2-pos "]" is-pathable-from-pos prev-pos cur-edge2-pos)
+    if not (
+      is-pathable-from-pos prev-pos cur-pos
+      and
+      is-pathable-from-pos prev-pos prev-edge1-pos
+      and
+      is-pathable-from-pos prev-pos prev-edge2-pos 
+      and
+      is-pathable-from-pos prev-pos cur-edge1-pos
+      and
+      is-pathable-from-pos prev-pos cur-edge2-pos
+    )
+    [
+      ;show (list "IS NOT PATAHBLE ON" prev-pos)
+      ;ask ts[die]
+      ;ask t [die]
+      report false
+    ]
+    
+    
+    set prev-pos cur-pos
+    set prev-edge1-pos cur-edge1-pos
+    set prev-edge2-pos cur-edge2-pos
+    ;show (list start-pos "-" cur-pos "->" goal-pos)
+  ]
+end
+
+; observer
+to-report p-pos [p]
+  report (list [pxcor] of p [pycor] of p)
+end
+to-report p-pathfind-straightened [start-vertex goal-vertex]
+  let path p-pathfind start-vertex goal-vertex
+  ;show (list "not straightened path" path)
+  let straightened-path straighten-path path
+  report straightened-path
+end
+
+to-report straighten-path [path]
+  let straightened-path _straighten-path path
+  let second-straightened-path _straighten-path straightened-path
+  while [length second-straightened-path < length straightened-path] [
+   set straightened-path second-straightened-path
+   set second-straightened-path _straighten-path straightened-path 
+  ]
+ 
+  report straightened-path
+end
+
+
+to-report _straighten-path [path]
+  let straight-source-index 0
+  let straight-prev-straight-index 1
+  let straight-destination-index 2
+  
+  let straight-path (list first path)
+  while [straight-destination-index < length path][
+    let straight-source-patch item straight-source-index path
+    let straight-destination-patch item straight-destination-index path
+    
+    ifelse is-straight-path-pos (p-pos straight-source-patch) (p-pos straight-destination-patch) [
+    ]
+    [
+      set straight-source-index straight-prev-straight-index
+      let last-straight-patch item straight-prev-straight-index path
+      set straight-path lput last-straight-patch straight-path
+    ]
+    set straight-prev-straight-index straight-destination-index
+    set straight-destination-index straight-destination-index + 1
+  ]  
+  
+  set straight-path lput last path straight-path
+  
+  report straight-path
+end
