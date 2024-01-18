@@ -89,11 +89,11 @@ end
 ; TODO test
 to-report p-platform-pathfind [start-node goal-node]
   reset-show-paths
-  if [p-platform] of start-node = [p-platform] of goal-node [
-    let path p-pathfind-straightened start-node goal-node
-    let meta-path (list path)
-    report meta-path
-  ]
+;  if [p-platform] of start-node = [p-platform] of goal-node [
+;    let path p-pathfind-straightened start-node goal-node
+;    let meta-path (list path)
+;    report meta-path
+;  ]
   ; SETUP
   reset-p-platform-pathfind
   let open-set []
@@ -173,6 +173,8 @@ to-report p-platform-pathfind [start-node goal-node]
         
         
         let goal-turtle one-of [portals-here] of self
+        
+        ifelse goal-turtle != nobody [
           
         (ifelse this-patch = start-node [
           ;let from-to-path p-pathfind-straightened this-patch [patch-here] of self 
@@ -198,14 +200,26 @@ to-report p-platform-pathfind [start-node goal-node]
             let path-cost distance-path path
             create-pathable-to this-meta-poi [ ; from other-meta-poi to this-meta-poi
               set pathable-path path
+                set pathable-cost path-cost
+                set color [0 255 255]
+              ] 
+            ]
+            [
+              error (word "Meta pathing " start-node "->" goal-node ": " this-patch " is not start or goal")
+            ]
+          )
+        ] [
+          ; start to end node or viceversa
+          if this-patch = start-node [
+            let path p-pathfind-straightened start-node goal-node
+            let path-cost distance-path path
+            create-pathable-from this-meta-poi [
+              set pathable-path path
               set pathable-cost path-cost
               set color [0 255 255]
-            ] 
-          ]
-          [
-            error (word "Meta pathing " start-node "->" goal-node ": " this-patch " is not start or goal")
-          ]
-        )
+            ]
+          ] 
+        ]
         
       ]
       
