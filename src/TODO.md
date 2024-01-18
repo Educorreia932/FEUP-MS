@@ -88,3 +88,7 @@ DONE To speed up the setup run
 To speed up and clean setup run
     Only kill goal and source findables. Keep the rest
 
+Add who to passenger init data
+Add meta distance wlaked path to init data
+Make patch into pos in init data
+Add walked path to end data

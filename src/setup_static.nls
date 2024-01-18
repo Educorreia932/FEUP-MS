@@ -57,10 +57,15 @@ to setup-configs
   set FILE "assets/4_platforms_3_floors_station.png"
   ;  set FILE "assets/4_platforms_3_floors_station_elevators.png"
   ; set FILE "assets/turtle_pathfinding_2.png"
-  set FILE "assets/2_floors_station_escalators.png"
-  set FILE "assets/2_floors_station_escalators_entry_exit.png"
-;  set FILE "assets/2_floors_station_predetermined_trains.png"
+;  set FILE "assets/2_floors_station_escalators.png"
+;  set FILE "assets/2_floors_station_escalators_entry_exit.png"
   set FILE "assets/trindade.png"
+  set FILE "assets/trindade_no_elevators.png"
+  set FILE "assets/trindade_single_stairs.png"
+;  set FILE "assets/trindade_long_trains.png"
+  set FILE "assets/trindade_escalators.png"
+;  set FILE "assets/report/2_floors_station.png"
+;  set FILE "assets/2_platforms_one_labyrinth.png"
   set FLOORS 3
   set LOG-DATA true
   set LOG-FOLDER "experiments/"

@@ -21,7 +21,7 @@ globals [
 ; observer
 to setup-run-constants 
   ; PRE RUN
-  set number-passengers 20
+  set number-passengers 300
   
   ; RUN
   set passenger-step 0.3
@@ -199,6 +199,7 @@ end
 ; observer
 to log-setup-run
   if LOG-DATA [
+    
     ask passengers[
       let pos pos-info (list xcor ycor)
       let source-pos pos-info (list [pxcor] of [patch-here] of source [pycor] of [patch-here] of source)
@@ -206,6 +207,7 @@ to log-setup-run
       let destination-pos pos-info (list [pxcor] of [patch-here] of destination [pycor] of [patch-here] of destination)
       let data (list pos source source-pos destination destination-pos destination-patch-pos passenger-meta-path)
       set p-init-data data
+      
       log-passenger-tick ; register tick 0
     ]
 
