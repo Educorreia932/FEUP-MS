@@ -1,0 +1,215 @@
+\section{Materials \& Methods} \label{sec:methods_materials}
+
+\subsection{Problem formalization}
+
+The transit station will be modeled with the following entities:
+\begin{itemize}
+    \item \textbf{Floors}, each being a grid with the same size
+    \item \textbf{Platforms}, part of a floor
+    \item \textbf{Passengers}
+    \item \textbf{Points of interest}, either a train or the outside
+    \item \textbf{Portals}, either a stair (in practice, representing the top of the stairs) or an elevator
+    \item \textbf{Obstacles}, representing walls, train tracks, or other fixtures (benches, trash bins, card validators).
+    \item \textbf{Escalators}, either upwards or downwards
+\end{itemize}
+
+A floor is made up of one or more platforms. A platform is such that a passenger can get to any place on the platform directly, and other platforms are only accessible by changing floors (taking a portal). \\
+Every entity is on a floor at any given point. Passengers can move to other floors by using portals. Different portals can have different behaviors. \\
+A passenger spawns in a cell of a point of interest: its source. A passenger has as a destination: a cell of another point of interest. A passenger has a given radius and speed. Two passengers can collide with each other if they are too close. \\
+If two portals of the same type are linked, they allow passengers to transition between the respective floors. \\
+Using stairs, passengers transition between floors instantly. Using elevators, passengers transition between floors in a time proportional to the number of floors traveled. For simplicity, elevators are static and not dynamic entities. As such, there is no capacity and no floor where the elevator is. When reaching an elevator, a passenger can use it as if it were their own personal elevator.\\
+Passengers cannot move through or be too close to obstacles.\\
+Every part of a floor that isn't an escalator or an obstacle is deemed as \textit{normal ground}.\\
+Escalators provide an increase in passenger speed. An escalator has three logical parts: entry, body, and exit. A passenger can only move to the entry from the normal ground or any escalator's exit and, from there, can only move to the body. A passenger can only move to the body from the entry and, from there, can only move to the exit. A passenger can only move to the exit from the body and, from there, can go to normal ground or any escalator's entry. We will call \textit{moving restrictions} the conditional movement set by escalators.\\
+Every entity but the passenger is considered as being the environment. Points of interest and portals are henceforth referred to as static entities. Static entities are made up of several cells. A static entity has a centroid, which is one of its cells. The centroid is the patch used for all of the path-finding operations (see \autoref{sec:methods_materials_static_pathfinding})\\
+
+\subsection{Materials}
+
+The described model was developed in the context of the simulation tools used for this work: NetLogo \cite{netlogo}. \\
+Additionally, the Trindade station, the main hub of the subway system of the city of Porto, Portugal, was modeled. Two pictures from its emergency evacuation plan and data collected from Google Maps were used to get a to-scale color-coded image representation of the station to be fed as the simulation's environment. Each color represents one of the aforementioned environmental entities.
+
+\newpage
+
+\subsection{Pipeline}
+
+The simulation happens as follows:
+\begin{enumerate}
+    \item Prepare the environment
+    \begin{enumerate}
+    \item Loading of the image. The colors are transformed into variables and data structures within the simulation.
+    \item For every platform, initialize the path-finding between static entities
+        \begin{enumerate}
+            \item Link corresponding portals
+            \item Path-finding is done bidirectionally between every distinct pair of the aggregate of points of interest and portals (\autoref{equation:bidirectional_pathfinding}) \\
+        \end{enumerate}
+            \end{enumerate}
+    \item Prepare the simulation run
+    \begin{enumerate}
+        \item Spawn the passengers one by one
+            \begin{enumerate}
+                \item Spawn the passenger in a random cell from all of the cells of the points of interest
+                \item Choose the destination from the cells of all of the other points of interest
+                \item Calculate the shortest path to be taken by the passenger through the different floors.
+            \end{enumerate}
+    \end{enumerate}
+    \item Run the simulation
+    \begin{enumerate}
+        \item For all passengers
+        \begin{enumerate}
+            \item Move the passengers to the next point of their path
+            \item Collide the passengers between each other
+            \item Repel passengers from walls
+            \item Log data
+            \item Update passengers' path
+        \end{enumerate}
+    \end{enumerate}
+    \item Save data to a file
+\end{enumerate}
+
+\begin{equation} \label{equation:bidirectional_pathfinding}
+\resizebox{\columnwidth}{!}{
+    $\forall{a, b}\ pathfind\left(a, b\right): a, b \in \left(PoI\ \bigcup\ Portals\right) , a \ne b$
+}
+\end{equation}
+
+\subsection{Platforms and floors}
+A transit station is often made up of multiple floors. We didn't use the 3D version of NetLogo for the work as the environment isn't truly three-dimensional but could instead be considered as multiple, discrete, connected 2D layers. Therefore, the image representation of the station is a series of same-sized rectangles of the subsequent floors. \autoref{fig:multiple_floors} represents an example of a station with three floors and four platforms.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\columnwidth]{assets/multiple_floors.png}
+    \caption{Image representation of a station with three floors with obstacles (black), stairs (yellow), and train tracks (blue). The floors are separated by boundaries (pink). The middle floor has two platforms}
+    \label{fig:multiple_floors}
+\end{figure}
+
+\subsection{Static path-finding}\label{sec:methods_materials_static_pathfinding}
+
+Static path-finding is done for each platform for the centroids of the static entities that belong to it and between the portals that connect platforms. In the end, there are a series of complete bidirectional graphs between the static entities of each and every platform and bidirectional edges connecting those. 
+
+What we describe as path-finding for the portals is as simple as comparing the coordinates of the portal within a floor and matching it to others whose coordinates are the same. We didn't consider the possibility of a transit station with more floors that might have, for example, stairs in the same position but only connecting floors 1 to 2 and 3 to 4, but not 2 to 3. Floor adjacency could be introduced to tackle this issue.
+
+Path-finding for the static entities is the conventional space traversal, which we will now analyze in depth. \\
+
+In NetLogo, there is both a cellular automaton and Euclidean space approach. There are patches, which occupy a quadrangular space with a side of one unit, and turtles that can have \textit{(x,y)} real coordinates that are, nonetheless, heavily linked to the patch (or cell) they are in.  \\
+Given that context, using a shortest-path algorithm for a grid feels intuitive. Our solution for path-finding does base itself on the \textit{A*} algorithm, using the Cartesian distance to the goal. However, to increase the simulation's realism, passengers must be able to move in any direction (not just in the eight directions of adjacent patches). Furthermore, we wanted to simplify itself so that moving sequentially in the same direction could be stored as just one instruction. To achieve both these goals, we developed an algorithm to straighten the path. \\
+\newline
+First, the shortest path between two points is calculated. For each patch, adjacency is as defined by Von Neumann, only the four patches that share an edge. \\
+Next, the path will be straightened. Being straight means that there are the passengers will not collide against any obstacle in the way and obey moving restrictions.\\
+To do so, the path is iteratively straightened until the length of the path doesn't change. Let's call each iteration a \textit{straightening step}. The straightening step is akin to an expanding window, where the window represents a sub-path we know is straight. Once the path is not straight, the previous window is saved, and the next expanding window can start on the position that broke the \textit{straightness}. \\
+The full algorithm is represented in pseudo-code in \autoref{alg:straigthen-path-algorithm}.
+Whilst not being perfect, the algorithm produces good results nonetheless.
+
+\begin{algorithm}
+\caption{Straigthen path algorithm}\label{alg:straigthen-path-algorithm}
+\begin{algorithmic}
+\Function{Straighten}{$path$} 
+    \State $path' \gets$ \Call{$StraightenStep$}{$path$}
+    \State $path'' \gets$ \Call{$StraightenStep$}{$path'$}
+    
+    \While{\Call{$len$}{$path'' < path'$}}
+        \State $path' \gets$ \Call{$StraightenStep$}{$path$}
+        \State $path'' \gets$ \Call{$StraightenStep$}{$path'$}
+    \EndWhile
+
+    \State \Return $path'$
+\EndFunction
+\\
+\Function{StraightenStep}{$path$} 
+    \State $p \gets 0$ \Comment{Expanding window fixed pivot}
+    \State $i \gets 2$ \Comment{Expanding window moving part}
+    \State $newPath \gets [\ ]$     
+
+    \While{$i <$ \Call{$len$}{$path$}}
+        \IfNot{\Call{$IsStraight$}{$path[p]$, $path[i]$}}
+            \LineComment Store previous expanding window is stored, and a new one is set up
+            \LineComment Store previous straight sub-path
+            \State $newPath \gets newPath \lor path[i - 1]$
+            \LineComment{Pivot of the new window}
+            \State $p \gets i - 1$ 
+        \EndIf
+
+        \LineComment{Always add the last element}
+        \State $newPath \gets newPath \lor path[-1]$
+
+        \State $i \gets i + 1$
+    \EndWhile
+    
+    \State \Return $newPath$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\columnwidth]{assets/diagonal_path.png} 
+    \caption{Two pairs of straightened (left) and not straightened-paths (right)}
+    \label{fig:straightened_path}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\columnwidth]{assets/obstacle_path.png}
+    \caption{A straightened (left) and not straightened path (right) around obstacles}
+    \label{fig:straightened_path_around_obstacle}
+\end{figure}
+
+As you can see, in \autoref{fig:straightened_path_around_obstacle}, the straightened path is not optimal. It is impossible to know a priori if a path will be optimized or not. One could theorize an approach that leverages the one used above to improve it further. At the time, the only solution we envisioned would be to brute force the set of all straightenings one could do by straightening in a different order than that shown in \autoref{alg:straigthen-path-algorithm}. Alternatively, a completely different method of path-finding that eliminates the need for straightening could have been developed. In \textit{A*}, instead of adjacency being only the four patches with which an edge is shared, it could be every patch that forms a straight path from the given patch. This approach was ultimately not adopted out of fear of being too computationally heavy to calculate the neighbors. \\
+
+For the straightening step, the function \textit{Is-Straight} is used. It is paramount, for it is what determines if a certain path (or sub-path) is straight. It takes into account the size of the passenger. The algorithm's intuition is that the passengers' path (and its volume) is approximated by a rectangle (in whatever orientation) and intersected with any possible obstacles that the passenger would collide with. Implementation-wise, the start and end of the path are checked for collisions independently. The rectangle intersection is, in turn, done by \textit{stepping} from the start to the end. The size of the step is linked to the precision of this approach: a bigger step means a smaller precision. In each step, a set of points is verified for possible collisions.\\
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\columnwidth]{assets/is-straight.png}
+    \caption{Illustration of Is-Straight algorithm. Obstacles (black), passenger at start (green/light green circle), passenger at end (yellow/orange circle), passenger's path (blue rectangle), representation of collision (red), overlap of start and end with passenger's path (lime and orange semicircle, respectively)}
+    \label{fig:is_straight}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\columnwidth]{assets/is-straight-step.png}
+    \caption{Illustration of a step of Is-Straight algorithm. Obstacle (black), passenger's path (light blue), passenger's center in i-th step (red circle), passenger's collision verification points in i-th step (green circles), path with collision (red square)}
+    \label{fig:is_straight_step}
+\end{figure}
+
+In \autoref{fig:is_straight}, a representation of the algorithm can be seen. The intersection of the passenger at the end of the path with an obstacle would mean the path is not straight. If that were not the case, the path's intersection with an obstacle would also yield the same result. This is achieved as is seen in \autoref{fig:is_straight_step}. Since one of the collision-verified points lies within the obstacle (a straightforward operation in NetLogo), there is indeed a collision. Note that, with a different step, there is a chance the collision is not detected.
+
+\subsection {Passengers' path-finding}
+
+To improve the scalability of a run by allowing a great number of passengers, passengers' path-finding leverages the preexisting static path-finding.  \\
+Given the fact that a passenger most often wants to transition between platforms, it would be impossible for a naive path-finding algorithm in a 2d environment to work, given there are no patches that are neighbors with other floors and different platforms are physically separated from each other. To use said approach, interpreting the portals as patches that neighbor other floors would allow for the path-finding to proceed. However, the heuristic functions for \textit{A*} would have to take floors into account, making it not as trivial, and path-finding in the new floor would increase the size of the path-finding. The solution adopted is to separate the path-finding on a platform and between platforms. To find the shortest path that traverses multiple platforms, we first calculate the remaining platform paths and use that to find the path between the platforms.\\
+
+The remaining platform paths consist of, for each passenger, path-finding from the passenger's source to the portals in the source's platform and from the passenger's destination to the portals in the destination's platform. To do this, instead of rerunning the path-finding algorithm described in \autoref{sec:methods_materials_static_pathfinding}, which would be time-consuming for a large number of passengers, we are going to reuse the already found paths and try to adapt them to the position of the passenger. \\
+
+In the case of the path between the source and one of the portals, we consider the path already found between the centroid of the point of interest the source belongs to (remember, a source is a cell of a point of interest and not its centroid) and the portal. This path is an ordered list of positions. From the first to the second position, there is a straight path; the second position is where a "bend" is located, followed by another straight segment to the third position. We assume that the distance from the cell to the centroid of the point of interest is not significant and, therefore, said bend would still apply would we rerun the path-finding algorithm. Therefore, we attempt to fit the already-found path to the new cell. To do this, we verify if the path from the source to the second position is a straight path, using the \textit{Is-Straight} described in \autoref{sec:methods_materials_static_pathfinding}. If so, then the new path has been found. If not, then we choose the next point in the segment from the second position to the centroid of the point of interest until a path from the source to the chosen point is straight. Analogously for the destination. \\
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{assets/merge_path_straight.png}
+    \caption{Merging paths. The pre-calculated path (red line), new segment that is merged (green line), second point (green circle), point of interest centroid (gray flag), and passenger (purple person)}
+    \label{fig:merge_path_straight}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{assets/merge_path_not_straight.png}
+    \caption{Merging paths. The pre-calculated path (red line), new segment that is merged (green line), second point (green circle), point of interest centroid (gray flag), and passenger (purple person)}
+    \label{fig:merge_path_not_straight}
+\end{figure}
+In \autoref{fig:merge_path_straight} and \autoref{fig:merge_path_not_straight}, two examples of this path merging can be seen. In \autoref{fig:merge_path_not_straight}, as there wasn't a straight path from the source to the second point, the merge segment had to be calculated and doesn't connect straight to the second point.
+
+For pathfinding between platforms, we use \textit{Dijkstra's} pathfinding algorithm, not on the environment's grid, but on a graph with certain entities as nodes. Those entities will be the source and destination cells for the passenger and every portal in the whole environment. Below there is a figure illustrating the final graph
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{assets/meta_pathfinding.png}
+    \caption{Graph for path-finding between platforms. Edges of graph (Light blue lines) The portals, specifically stairs (yellow rectangles), passenger (purple person), and destination cell (green circle)}
+    \label{fig:meta_pathfinding}
+\end{figure}
+
+
+\subsection {Collisions}
+
+The collision between the passengers is done to minimize the superposition of passengers. It uses the Lennard-Jones potential described by the equation 
+$$
+V_{LJ}(r)=4\epsilon\left[\left(\frac{\sigma}{r}\right)^{12}-\left(\frac{\sigma}{r}\right)^6\right]
+$$

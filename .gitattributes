@@ -1,3 +1,5 @@
 *.nlogo linguist-language=NetLogo
 *.nls linguist-language=NetLogo
 *.ipynb linguist-vendored
+*.tex linguist-vendored
+*.cls linguist-vendored
